@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Actogram Plotter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF1F4; --surface:#FFFFFF; --ink:#18212B; --muted:#5F6B78; --line:#D3D9E0;
+  --field:#F7F9FA; --peak:#C62828; --trough:#1F4FD1; --focus:#1F4FD1; --bad:#B8323F; --ok:#2E7D5B;
+  --info:#1F5FA8; --warn:#9A5B00; --sel:#1F6FD1; --sel-ink:#FFFFFF; --change:#FFF1CC; --band:#ECECEC;
+  color-scheme:light; box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141920; --surface:#1D242C; --ink:#E6EBF0; --muted:#9AA6B2; --line:#323C47;
+    --field:#171D23; --peak:#EF6B6B; --trough:#7FA4F0; --focus:#7FA4F0; --bad:#F07A84; --ok:#6CC59B;
+    --info:#8DB8EC; --warn:#E3A35C; --sel:#3D84E0; --sel-ink:#FFFFFF; --change:#4A3D1C; --band:#2C343E;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141920; --surface:#1D242C; --ink:#E6EBF0; --muted:#9AA6B2; --line:#323C47;
+  --field:#171D23; --peak:#EF6B6B; --trough:#7FA4F0; --focus:#7FA4F0; --bad:#F07A84; --ok:#6CC59B;
+  --info:#8DB8EC; --warn:#E3A35C; --sel:#3D84E0; --sel-ink:#FFFFFF; --change:#4A3D1C; --band:#2C343E;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Atkinson Hyperlegible","Segoe UI","Helvetica Neue",Arial,sans-serif;font-size:15px;line-height:1.5}
+header{max-width:1640px;margin:0 auto;padding:22px 24px 4px;display:flex;gap:14px;align-items:center}
+header img{width:48px;height:48px;flex:none}
+h1{font-size:1.6rem;font-weight:700;margin:0}
+header p{margin:0;color:var(--muted)}
+main{max-width:1640px;margin:0 auto;padding:14px 24px 40px;display:grid;
+  grid-template-columns:minmax(640px,700px) minmax(0,1fr);gap:22px;align-items:start}
+@media (max-width:1300px){ main{grid-template-columns:minmax(0,1fr)} }
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.block + .block{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+h2{font-size:1.02rem;font-weight:700;margin:0 0 8px}
+.hint{color:var(--muted);font-size:.85rem;margin:6px 0 0}
+.warn{color:var(--warn);font-size:.85rem;margin:6px 0 0}
+.info{color:var(--info);font-size:.85rem;margin:6px 0 0;white-space:pre-line}
+.errs{color:var(--bad);font-size:.85rem;margin:6px 0 0;white-space:pre-line}
+.errs:empty,.info:empty{display:none}
+input[type=text],input[type=number],select,textarea{font:inherit;color:var(--ink);background:var(--field);
+  border:1px solid var(--line);border-radius:6px;padding:4px 8px;min-width:0}
+input:disabled,select:disabled,button:disabled{opacity:.45;cursor:default}
+textarea{width:100%;min-height:180px;resize:vertical;font-variant-numeric:tabular-nums;line-height:1.45}
+[aria-invalid=true]{border-color:var(--bad)!important;box-shadow:inset 0 0 0 1px var(--bad)}
+:focus-visible{outline:2px solid var(--focus);outline-offset:1px}
+button{font:inherit;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:6px;padding:5px 12px;cursor:pointer}
+button:hover:not(:disabled){border-color:var(--muted)}
+button.primary{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.mono{font-family:ui-monospace,"Cascadia Mono",Consolas,Menlo,monospace;font-variant-numeric:tabular-nums}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chk{display:inline-flex;gap:6px;align-items:center;cursor:pointer}
+.chk input{width:16px;height:16px;margin:0;accent-color:var(--ink)}
+.clock{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 8px;align-items:center}
+.clock > span{font-weight:700}
+#tzSelect{width:100%}
+#tzOther{width:100%;margin-top:6px}
+#tzOther[hidden]{display:none}
+.series{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.series label{display:flex;flex-direction:column;gap:4px;font-weight:700;font-size:.92rem}
+.series .p{color:var(--peak)} .series .t{color:var(--trough)}
+.count{font-size:.82rem;font-weight:400;min-height:1.2em}
+.count.ok{color:var(--ok)} .count.bad{color:var(--bad)}
+/* date-time field */
+.dt{display:inline-flex;gap:4px;align-items:center}
+.dt input{width:13.6em;cursor:pointer}
+.dt.compact input{width:10.4em;padding:4px 6px}
+.dt button{padding:4px 8px}
+/* wheel time field */
+.tf{display:inline-flex;gap:3px;align-items:center}
+.tf input{width:4.1em;text-align:center;padding:4px 4px}
+.tf button{padding:4px 7px;line-height:1.1}
+.wheel-pop{position:absolute;z-index:50;background:var(--surface);border:1px solid var(--line);border-radius:6px;
+  box-shadow:0 6px 24px rgba(0,0,0,.18);padding:2px}
+.wheel-pop canvas{display:block;cursor:grab;touch-action:none}
+/* LD table */
+.ld-wrap{overflow-x:auto}
+.ld-table{display:grid;grid-template-columns:auto auto auto auto auto auto;gap:5px 7px;align-items:center;justify-content:start}
+.ld-table .h{font-size:.8rem;color:var(--muted)}
+.ld-table [hidden]{display:none}
+.ld-body[hidden]{display:none}
+.radios{display:flex;flex-direction:column;gap:5px}
+/* plot settings */
+.pgrid{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:center}
+.pgrid > label:first-child,.pgrid .k{color:var(--muted);font-size:.9rem}
+.pgrid #title{width:100%}
+.pgrid > .seg,.pgrid > select{justify-self:start}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg label{padding:4px 12px;cursor:pointer;background:var(--field)}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label:has(input:checked){background:var(--ink);color:var(--surface)}
+.seg label:has(input:focus-visible){outline:2px solid var(--focus);outline-offset:-2px}
+.opts{display:flex;flex-direction:column;gap:5px}
+/* chart */
+.paper-wrap{overflow:auto;border:1px solid var(--line);border-radius:8px;background:#fff;max-height:78vh}
+#chart{display:block;width:100%;min-width:720px;height:auto}
+.tune{margin-top:14px;border:1px solid var(--line);border-radius:8px;padding:12px 14px;background:var(--field)}
+.tune h3{font-size:.98rem;margin:0 0 8px}
+.adj + .adj{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
+.adj-label{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;font-weight:700;font-size:.92rem;margin-bottom:5px}
+.adj-val{font-weight:400;color:var(--info);font-variant-numeric:tabular-nums}
+.adj-ctrl{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.adj-ctrl button{padding:3px 9px;font-size:.86rem;background:var(--surface);touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.adj-ctrl input[type=range]{flex:1 1 200px;min-width:140px;accent-color:var(--ink)}
+.adj-ctrl input[type=number]{width:6em;text-align:right}
+#rowsNote{color:var(--bad);font-size:.85rem}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+#status{color:var(--muted);font-size:.86rem}
+.sr{position:absolute;left:-9999px}
+/* dialogs */
+dialog{border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);padding:0;
+  box-shadow:0 12px 40px rgba(0,0,0,.25);max-width:min(96vw,440px)}
+dialog::backdrop{background:rgba(10,15,25,.35)}
+.dlg{padding:14px 16px}
+.dlg h3{margin:0 0 10px;font-size:1rem}
+.cal-head{display:flex;gap:6px;align-items:center}
+.cal-head select{flex:1}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:8px;text-align:center}
+.cal .wd{font-size:.8rem;color:var(--muted);padding:2px 0}
+.cal button{padding:6px 0;border:1px solid transparent;background:transparent;border-radius:5px;font-variant-numeric:tabular-nums}
+.cal button.change{background:var(--change)}
+.cal button.today{border-color:var(--ink)}
+.cal button.sel{background:var(--sel);color:var(--sel-ink)}
+.cal button:empty{visibility:hidden}
+#dtNote{color:var(--warn);font-size:.84rem;margin:8px 0 0}
+.time-row{display:flex;gap:6px;align-items:center;margin-top:10px}
+.time-row .sp{flex:1}
+#dtChoice{margin-top:8px;font-size:.9rem}
+#dtChoice[hidden]{display:none}
+#dtPreview{margin:10px 0 0;font-size:.9rem}
+#dtPreview.ok{color:var(--ok)} #dtPreview.bad{color:var(--bad)}
+.sugg{margin-top:10px;border:1px solid var(--line);border-radius:6px;padding:8px}
+.sugg[hidden]{display:none}
+.sugg b{font-size:.86rem}
+.sugg-list{max-height:150px;overflow:auto;margin-top:6px;border:1px solid var(--line);border-radius:4px;background:var(--field)}
+.sugg-list button{display:block;width:100%;text-align:left;border:0;border-radius:0;background:transparent;padding:3px 8px;font-size:.82rem;white-space:pre}
+.sugg-list button:hover{background:var(--band)}
+.sugg-list button.on{background:var(--sel);color:var(--sel-ink)}
+.dlg-buttons{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+</style>
+</head>
+<body>
+<header>
+  <img alt="" src="data:image/png;base64,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">
+  <div>
+    <h1>Actogram Plotter</h1>
+    <p>Peak and trough times (hours after time zero) with light/dark conditions, drawn as an actogram.</p>
+  </div>
+</header>
+
+<main>
+  <section class="panel" aria-label="Data and conditions">
+    <div class="block">
+      <h2>Clock time of the data</h2>
+      <div class="clock">
+        <span>0 h =</span><div id="t0Field"></div>
+        <label for="tzSelect">Time zone</label>
+        <div>
+          <select id="tzSelect"></select>
+          <input type="text" id="tzOther" spellcheck="false" placeholder="e.g. Europe/Rome or UTC+09:00" hidden>
+        </div>
+      </div>
+      <p class="warn">⚠ Enter every date/time as the LOCAL clock time, as shown on a wall clock on that day – standard or daylight time alike (e.g. CST in winter, CDT in summer). Don’t convert daylight time to standard time: the switch and the offset to UTC are taken into account automatically.</p>
+      <p class="hint">Default: US Central Time (America/Chicago, CST/CDT).</p>
+      <p class="errs" id="clockErr"></p>
+    </div>
+
+    <div class="block">
+      <h2>Peaks and troughs (hours after 0 h)</h2>
+      <div class="series">
+        <label><span class="p">● Peaks (h)</span>
+          <textarea id="peaks" class="mono" spellcheck="false"></textarea>
+          <span class="count" id="peaksCount"></span>
+        </label>
+        <label><span class="t">● Troughs (h)</span>
+          <textarea id="troughs" class="mono" spellcheck="false"></textarea>
+          <span class="count" id="troughsCount"></span>
+        </label>
+      </div>
+      <p class="hint">One value per line. Paste a column from a spreadsheet. Negative values are allowed.</p>
+      <div class="row" style="margin-top:8px">
+        <button type="button" id="loadExample">Load example</button>
+        <button type="button" id="clearData">Clear data</button>
+      </div>
+    </div>
+
+    <div class="block">
+      <h2>Light/dark (LD) cycles</h2>
+      <label class="chk"><input type="checkbox" id="showLD">Show the LD cycles in the actogram</label>
+      <div class="ld-body" id="ldBody">
+        <div class="ld-wrap" style="margin-top:8px"><div class="ld-table" id="ldTable">
+          <span class="h"></span><span class="h">Condition</span><span class="h">L (hh:mm)</span><span class="h">D (hh:mm)</span><span class="h">Starts at (click 📅 to pick)</span><span class="h">Begins with</span>
+        </div></div>
+        <div class="row" style="margin-top:8px">
+          <label for="nChanges">Number of changes</label>
+          <select id="nChanges"></select><span class="hint" style="margin:0">(0–5)</span>
+        </div>
+        <label class="chk" style="margin-top:8px"><input type="checkbox" id="extendBefore">Also draw the first cycle before its start time</label>
+        <p class="errs" id="ldErr"></p>
+        <p class="info" id="ldInfo"></p>
+        <p class="hint">LD = light/dark cycle (L, D and the period it begins with are used), LL = constant light, DD = constant darkness. Each condition starts at its date/time and lasts until the next change. For a change from LD to LL or DD, the picker lists the ends of D or L of the previous cycle.</p>
+      </div>
+    </div>
+
+    <div class="block">
+      <h2>Actogram day 0, 0 h (left end of the top row)</h2>
+      <div class="radios">
+        <label class="chk"><input type="radio" name="origin" value="clock">0 h of the data (time zero)</label>
+        <label class="chk"><input type="radio" name="origin" value="lights_on">Lights-on of the first LD cycle on its start date (LL/DD: its start)</label>
+        <label class="chk"><input type="radio" name="origin" value="custom">Another date/time:</label>
+      </div>
+      <div id="originField" style="margin:6px 0 0 22px"></div>
+      <p class="errs" id="originErr"></p>
+      <p class="info" id="originInfo"></p>
+    </div>
+
+    <div class="block">
+      <h2>Plot</h2>
+      <div class="pgrid">
+        <label for="title">Title</label><input type="text" id="title">
+        <span class="k">Period T (hh:mm)</span><span class="row"><span class="tf"><input type="text" id="period" class="mono" inputmode="numeric"></span><span class="errs" id="periodErr" style="margin:0"></span></span>
+        <span class="k">Plot</span>
+        <div class="seg" role="radiogroup" aria-label="Plot"><label><input type="radio" name="plot" value="double">Double</label><label><input type="radio" name="plot" value="single">Single</label></div>
+        <span class="k">Row labels</span>
+        <div class="seg" role="radiogroup" aria-label="Row labels"><label><input type="radio" name="rowlab" value="number">Number</label><label><input type="radio" name="rowlab" value="date">Date</label></div>
+        <label for="xMajor">X major ticks</label><select id="xMajor"></select>
+        <label for="xMinor">X minor ticks</label><select id="xMinor"></select>
+        <span class="k">Options</span>
+        <div class="opts">
+          <div class="row"><label class="chk"><input type="checkbox" id="show_values">Show times</label>
+            <label class="chk"><input type="checkbox" id="link_peak">Connect peaks</label>
+            <label class="chk"><input type="checkbox" id="link_trough">Connect troughs</label></div>
+          <label class="chk"><input type="checkbox" id="label_onsets">Label the start times of light and dark periods</label>
+          <label class="chk"><input type="checkbox" id="label_row_starts">Label the start date/time of each cycle (y axis)</label>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="h-chart">
+    <h2 id="h-chart" class="sr">Actogram</h2>
+    <div class="paper-wrap"><div id="chartHost"></div></div>
+    <div class="tune">
+      <h3>Fine-tune the plot (1-minute steps)</h3>
+      <div class="adj" data-key="t0">
+        <div class="adj-label">0 h of the data<span class="adj-val"></span></div>
+        <div class="adj-ctrl">
+          <button type="button" data-d="-60">−1 h</button><button type="button" data-d="-10">−10 min</button><button type="button" data-d="-1">−1 min</button>
+          <input type="range" min="-720" max="720" step="1" value="0" aria-label="Shift 0 h of the data, in minutes">
+          <button type="button" data-d="1">+1 min</button><button type="button" data-d="10">+10 min</button><button type="button" data-d="60">+1 h</button>
+        </div>
+      </div>
+      <div class="adj" data-key="origin">
+        <div class="adj-label">Actogram day 0, 0 h<span class="adj-val"></span></div>
+        <div class="adj-ctrl">
+          <button type="button" data-d="-60">−1 h</button><button type="button" data-d="-10">−10 min</button><button type="button" data-d="-1">−1 min</button>
+          <input type="range" min="-720" max="720" step="1" value="0" aria-label="Shift actogram day 0, 0 h, in minutes">
+          <button type="button" data-d="1">+1 min</button><button type="button" data-d="10">+10 min</button><button type="button" data-d="60">+1 h</button>
+        </div>
+      </div>
+      <div class="adj" data-key="period">
+        <div class="adj-label">Period T<span class="adj-val"></span></div>
+        <div class="adj-ctrl">
+          <button type="button" data-d="-60">−1 h</button><button type="button" data-d="-10">−10 min</button><button type="button" data-d="-1">−1 min</button>
+          <input type="range" min="1" max="14400" step="1" aria-label="Period T, in minutes">
+          <button type="button" data-d="1">+1 min</button><button type="button" data-d="10">+10 min</button><button type="button" data-d="60">+1 h</button>
+        </div>
+      </div>
+      <div class="adj">
+        <div class="adj-label">Rows (cycles)<span class="adj-val" id="rowsInfo"></span></div>
+        <div class="adj-ctrl">
+          <label class="chk"><input type="checkbox" id="rows_auto">Automatic</label>
+          <label for="row_min">&nbsp;Min</label><input type="number" id="row_min" step="1" min="-9999" max="9999">
+          <label for="row_max">&nbsp;Max</label><input type="number" id="row_max" step="1" min="-9999" max="9999">
+          <span id="rowsNote"></span>
+        </div>
+      </div>
+      <p class="hint">Hold a button to repeat. With a slider focused, each arrow key press moves it by 1 minute; the 0 h and day 0, 0 h sliders move up to ±12 h from where you start. Shifting day 0, 0 h here switches it to “Another date/time”. Rows: untick Automatic to set the first (Min) and last (Max) row in whole cycles; negative values are allowed.</p>
+    </div>
+    <div class="bar">
+      <span id="saveFig" hidden><button type="button" id="savePng">Save as PNG</button> <button type="button" id="saveSvg">Save as SVG</button></span>
+      <button type="button" id="saveSettings" hidden>Save settings</button>
+      <button type="button" id="loadSettings">Load settings…</button>
+      <input type="file" id="settingsFile" accept=".json,application/json" hidden>
+      <span id="status" role="status"></span>
+    </div>
+  </section>
+</main>
+
+<dialog id="dtDlg" aria-labelledby="dtTitle">
+  <div class="dlg">
+    <h3 id="dtTitle">Date and time</h3>
+    <div class="cal-head">
+      <button type="button" id="dtPrev" aria-label="Previous month">◀</button>
+      <select id="dtMonth" aria-label="Month"></select>
+      <select id="dtYear" aria-label="Year"></select>
+      <button type="button" id="dtNext" aria-label="Next month">▶</button>
+      <button type="button" id="dtToday">Today</button>
+    </div>
+    <div class="cal" id="dtCal"></div>
+    <p id="dtNote"></p>
+    <div class="time-row">
+      <span>Time (24-hour clock)</span>
+      <select id="dtHour" aria-label="Hour"></select>:<select id="dtMinute" aria-label="Minute"></select>
+      <span class="sp"></span><button type="button" id="dtNow">Now</button>
+    </div>
+    <div id="dtChoice" hidden>This time occurs twice:
+      <label class="chk"><input type="radio" name="dtChoice" value=""><span></span></label>
+      <label class="chk"><input type="radio" name="dtChoice" value=""><span></span></label>
+    </div>
+    <p id="dtPreview"></p>
+    <div class="sugg" id="dtSugg" hidden>
+      <b id="dtSuggTitle"></b>
+      <div class="sugg-list mono" id="dtSuggList"></div>
+      <p class="hint" id="dtSuggHint">Click one to use it (double-click: use it and close).</p>
+      <p class="warn" id="dtSuggNote"></p>
+    </div>
+    <div class="dlg-buttons"><button type="button" id="dtOk" class="primary">OK</button><button type="button" id="dtCancel">Cancel</button></div>
+  </div>
+</dialog>
+
+<dialog id="askDlg" aria-labelledby="askText">
+  <div class="dlg">
+    <h3 id="askText"></h3>
+    <p class="hint" id="askSub"></p>
+    <div class="dlg-buttons"><button type="button" id="askYes">Yes</button><button type="button" id="askNo" class="primary">No</button></div>
+  </div>
+</dialog>
+<script>
+(function(){
+'use strict';
+const $ = id => document.getElementById(id);
+const KEY = 'actogram-plotter-v4';
+const H = 3600000, MAX_CHANGES = 5, LD_MAX_MIN = 99*60 + 59;
+const PERIOD_MIN = 1, PERIOD_MAX = 240*60, MAX_ROWS = 1000;
+const DEFAULT_TZ = 'America/Chicago', DEFAULT_PERIOD = '24:00', EXAMPLE_TITLE = 'Example Data';
+const LIGHT = '#fff3b0', DARK = '#8c8c8c', PEAK = '#d32f2f', TROUGH = '#1f4fd1';
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const WDAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const z2 = n => String(n).padStart(2,'0');
+const g = v => String(+(+v).toFixed(3));
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------------- time zones ---------------- */
+// from the zone furthest ahead of UTC (east) westwards, the Americas included; UTC last
+const TIME_ZONES = [
+  ['Pacific/Auckland','Auckland (UTC+12:00 / +13:00)'],
+  ['Australia/Sydney','Sydney, Melbourne (UTC+10:00 / +11:00)'],
+  ['Australia/Brisbane','Brisbane (UTC+10:00)'],
+  ['Asia/Tokyo','Tokyo (UTC+09:00)'],
+  ['Asia/Seoul','Seoul (UTC+09:00)'],
+  ['Asia/Shanghai','Beijing, Shanghai (UTC+08:00)'],
+  ['Asia/Hong_Kong','Hong Kong (UTC+08:00)'],
+  ['Asia/Taipei','Taipei (UTC+08:00)'],
+  ['Asia/Singapore','Singapore (UTC+08:00)'],
+  ['Australia/Perth','Perth (UTC+08:00)'],
+  ['Asia/Bangkok','Bangkok, Hanoi, Jakarta (UTC+07:00)'],
+  ['Asia/Kolkata','India – Delhi, Mumbai (UTC+05:30)'],
+  ['Asia/Dubai','Dubai (UTC+04:00)'],
+  ['Europe/Moscow','Moscow (UTC+03:00)'],
+  ['Europe/Istanbul','Istanbul (UTC+03:00)'],
+  ['Africa/Nairobi','Nairobi (UTC+03:00)'],
+  ['Europe/Athens','Athens, Helsinki (UTC+02:00 / +03:00)'],
+  ['Africa/Cairo','Cairo (UTC+02:00 / +03:00)'],
+  ['Africa/Johannesburg','Johannesburg (UTC+02:00)'],
+  ['Europe/Berlin','Berlin, Amsterdam, Stockholm (UTC+01:00 / +02:00)'],
+  ['Europe/Paris','Paris, Madrid, Rome (UTC+01:00 / +02:00)'],
+  ['Africa/Lagos','Lagos (UTC+01:00)'],
+  ['Europe/London','London, Dublin, Lisbon (UTC±00:00 / +01:00)'],
+  ['America/Sao_Paulo','São Paulo (UTC−03:00)'],
+  ['America/Halifax','Atlantic Time – Halifax (UTC−04:00 / −03:00)'],
+  ['America/New_York','Eastern Time – New York (UTC−05:00 / −04:00)'],
+  ['America/Chicago','Central Time – Chicago (UTC−06:00 / −05:00)'],
+  ['America/Mexico_City','Mexico City (UTC−06:00)'],
+  ['America/Denver','Mountain Time – Denver (UTC−07:00 / −06:00)'],
+  ['America/Phoenix','Mountain Time, no DST – Arizona (UTC−07:00)'],
+  ['America/Los_Angeles','Pacific Time – Los Angeles (UTC−08:00 / −07:00)'],
+  ['America/Anchorage','Alaska Time – Anchorage (UTC−09:00 / −08:00)'],
+  ['Pacific/Honolulu','Hawaii Time – Honolulu (UTC−10:00)'],
+  ['UTC','Coordinated Universal Time (UTC±00:00)']
+];
+const TZ_LABELS = Object.fromEntries(TIME_ZONES.map(([k,t]) => [k, `${k}   –   ${t}`]));
+const TZ_ALIASES = {'asia/beijing':'Asia/Shanghai','beijing':'Asia/Shanghai','asia/calcutta':'Asia/Kolkata',
+  'us/central':'America/Chicago','us/eastern':'America/New_York','us/mountain':'America/Denver','us/pacific':'America/Los_Angeles'};
+
+function tzKey(text){
+  const t = String(text||'').trim();
+  if(!t) return DEFAULT_TZ;
+  const m = /^(?:UTC|GMT)?\s*([+-])\s*(\d{1,2})(?::?(\d{2}))?$/i.exec(t);
+  if(m) return `UTC${m[1]}${z2(+m[2])}:${z2(+(m[3]||0))}`;
+  const key = t.split(/\s+/)[0];
+  if(/^(utc|gmt|z)$/i.test(key)) return 'UTC';
+  return TZ_ALIASES[key.toLowerCase()] || key;
+}
+const fixedOffset = tz => { const m = /^UTC([+-])(\d{2}):(\d{2})$/.exec(tz); return m ? (m[1]==='+'?1:-1)*((+m[2])*60 + (+m[3]))*60000 : null; };
+const fmtCache = {};
+function partsIn(ms, tz){
+  const fo = fixedOffset(tz);
+  if(fo !== null){
+    const d = new Date(ms + fo);
+    return {y:d.getUTCFullYear(), mo:d.getUTCMonth()+1, d:d.getUTCDate(), h:d.getUTCHours(), mi:d.getUTCMinutes(), s:d.getUTCSeconds(), abbr:tz};
+  }
+  const f = fmtCache[tz] || (fmtCache[tz] = new Intl.DateTimeFormat('en-US', {timeZone:tz, hourCycle:'h23',
+    year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit', timeZoneName:'short'}));
+  const p = {}; for(const x of f.formatToParts(new Date(ms))) p[x.type] = x.value;
+  return {y:+p.year, mo:+p.month, d:+p.day, h:(+p.hour)%24, mi:+p.minute, s:+p.second, abbr:p.timeZoneName||''};
+}
+function validTZ(tz){
+  if(fixedOffset(tz) !== null) return Math.abs(fixedOffset(tz)) <= 14*H;
+  try{ new Intl.DateTimeFormat('en-US',{timeZone:tz}); return true; }catch(e){ return false; }
+}
+const offsetMs = (ms, tz) => { const p = partsIn(ms, tz); return Date.UTC(p.y,p.mo-1,p.d,p.h,p.mi,p.s) - Math.floor(ms/1000)*1000; };
+function utcOffsetLabel(ms, tz){
+  const m = Math.round(offsetMs(ms, tz)/60000), a = Math.abs(m);
+  return `UTC${m>=0?'+':'−'}${z2(Math.floor(a/60))}:${z2(a%60)}`;
+}
+function splitAbbr(str){
+  const t = String(str||'').trim();
+  const m = /^(.*\d)\s+([A-Za-z]{2,5}|GMT[+-]\d{1,2}(?::\d{2})?|UTC[+-]\d{2}:\d{2})$/.exec(t);
+  return m ? {base:m[1], abbr:m[2].toUpperCase()} : {base:t, abbr:''};
+}
+function parseLocal(str){
+  const m = /^(\d{4})[-/](\d{1,2})[-/](\d{1,2})[T ]+(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec(String(str||'').trim());
+  if(!m) return null;
+  const v = {y:+m[1], mo:+m[2], d:+m[3], h:+m[4], mi:+m[5], s:+(m[6]||0)};
+  const t = new Date(Date.UTC(v.y, v.mo-1, v.d, v.h, v.mi, v.s));
+  if(t.getUTCMonth() !== v.mo-1 || t.getUTCDate() !== v.d || v.h > 23 || v.mi > 59) return null;
+  return v;
+}
+function candidates(w, tz){                       // UTC instants that show wall time w in tz
+  const wall = Date.UTC(w.y, w.mo-1, w.d, w.h, w.mi, w.s);
+  const out = new Map();
+  for(const probe of [wall - 14*H, wall - 3*H, wall + 3*H, wall + 14*H]){
+    const guess = wall - offsetMs(probe, tz); const p = partsIn(guess, tz);
+    if(Date.UTC(p.y,p.mo-1,p.d,p.h,p.mi,p.s) === wall) out.set(guess, p.abbr.toUpperCase());
+  }
+  return [...out.entries()].sort((a,b) => a[0]-b[0]).map(([ms,abbr]) => ({ms, abbr}));
+}
+// local clock time 'YYYY-MM-DD hh:mm' (optionally + zone abbreviation) -> {ms} | {error}
+function localToUtc(str, tz, what){
+  const {base, abbr} = splitAbbr(str);
+  const w = parseLocal(base);
+  if(!w) return {error:`${what}: pick a date and time.`};
+  const c = candidates(w, tz);
+  if(!c.length) return {error:`${what}: ${base} does not exist in ${tz} (the clocks jump forward then).`};
+  if(abbr && c.length === 2){ const hit = c.find(x => x.abbr === abbr); if(hit) return {ms:hit.ms}; }
+  return {ms:c[0].ms};                            // repeated hour: first occurrence (daylight time)
+}
+function isAmbiguous(str, tz){ const w = parseLocal(splitAbbr(str).base); return !!w && candidates(w, tz).length === 2; }
+function wallText(ms, tz){ const p = partsIn(ms, tz); return `${p.y}-${z2(p.mo)}-${z2(p.d)} ${z2(p.h)}:${z2(p.mi)}`; }
+function wallString(ms, tz){ const t = wallText(ms, tz); return isAmbiguous(t, tz) ? `${t} ${partsIn(ms, tz).abbr}` : t; }
+const fmtLocal = (ms, tz) => `${wallText(ms, tz)} ${partsIn(ms, tz).abbr}`;
+function describeLocal(str, tz){
+  const r = localToUtc(str, tz, 'Date/time'); if(r.error) return r;
+  const p = partsIn(r.ms, tz), u = new Date(r.ms);
+  const wd = WDAYS[new Date(Date.UTC(p.y,p.mo-1,p.d)).getUTCDay()];
+  return {text:`${wd}, ${p.d} ${MONTHS[p.mo-1]} ${p.y}, ${z2(p.h)}:${z2(p.mi)} ${p.abbr} (${utcOffsetLabel(r.ms, tz)}) = `
+              + `${u.getUTCFullYear()}-${z2(u.getUTCMonth()+1)}-${z2(u.getUTCDate())} ${z2(u.getUTCHours())}:${z2(u.getUTCMinutes())} UTC`};
+}
+function dayText(y, mo, d){ return `${y}-${z2(mo)}-${z2(d)}`; }
+function midnightOf(ms, tz, add){
+  const p = partsIn(ms, tz), d = new Date(Date.UTC(p.y, p.mo-1, p.d + (add||0)));
+  for(const hh of ['00:00','01:00']){
+    const r = localToUtc(`${dayText(d.getUTCFullYear(), d.getUTCMonth()+1, d.getUTCDate())} ${hh}`, tz, 'Midnight');
+    if(r.ms !== undefined) return r.ms;
+  }
+  return d.getTime();
+}
+// null, or ['forward'|'back', note] if the clocks of tz change on that day
+function clockChangeOn(y, mo, d, tz){
+  const day0 = Date.UTC(y, mo-1, d);
+  if(offsetMs(day0 - 15*H, tz) === offsetMs(day0 + 39*H, tz)) return null;
+  for(let hr = 0; hr < 24; hr++){
+    const w = {y, mo, d, h:hr, mi:30, s:0};
+    const c = candidates(w, tz);
+    if(c.length === 1) continue;
+    const at = hhmm => { const r = localToUtc(`${dayText(y, mo, d)} ${hhmm}`, tz, ''); return r.ms === undefined ? '' : partsIn(r.ms, tz).abbr; };
+    const before = at('00:00') || at('01:00'), after = at('23:30');
+    if(!c.length) return ['forward', `clocks go forward at ${z2(hr)}:00 ${before} to ${z2(hr+1)}:00 ${after} – ${z2(hr)}:00–${z2(hr)}:59 does not exist.`];
+    return ['back', `clocks go back at ${z2(hr+1)}:00 ${c[0].abbr} to ${z2(hr)}:00 ${c[1].abbr} – ${z2(hr)}:00–${z2(hr)}:59 occurs twice.`];
+  }
+  return null;                                   // the change falls on a neighbouring day
+}
+
+/* ---------------- small parsers ---------------- */
+function parseList(text){
+  const vals = [], bad = [];
+  for(const tok of String(text||'').split(/[\s,;]+/).filter(Boolean)){
+    const v = Number(tok.replace(/[０-９．－]/g, c => String.fromCharCode(c.charCodeAt(0)-0xFEE0)));
+    Number.isFinite(v) ? vals.push(v) : bad.push(tok);
+  }
+  return {vals, bad};
+}
+function parseDur(s){
+  const t = String(s||'').trim(); const m = /^(\d{1,3}):([0-5]\d)$/.exec(t);
+  if(m) return (+m[1]) + (+m[2])/60;
+  if(/^\d+(\.\d+)?$/.test(t)) return +t;
+  return NaN;
+}
+const fmtDur = h => { const m = Math.round(h*60); return `${Math.floor(m/60)}:${z2(m%60)}`; };
+const fmtDur2 = h => fmtDur(h).padStart(5,'0');
+
+const X_MAJOR = ['No major tick (ticks at 0 and T only)', ...[1,2,3,4,5].map(n => `${n} major tick${n>1?'s':''} per T (${n+1} subdivisions)`)];
+const X_MINOR = ['No minor tick', ...Array.from({length:11},(_,i)=>i+1).map(n => `${n} minor tick${n>1?'s':''} (${n+1} subdivisions)`)];
+const xMajorCount = v => { const t = String(v).trim(); if(/^no/i.test(t)) return 0; const m = /^(\d+)/.exec(t); return m ? Math.max(0, Math.min(5, +m[1])) : 3; };
+const xMinorCount = v => { const m = /^\s*(\d+)/.exec(String(v)); return m ? Math.max(0, Math.min(11, +m[1])) : 0; };
+
+/* ---------------- settings (same keys as the desktop app's JSON) ---------------- */
+const EXAMPLE_PEAKS = [12.47, 36.75, 60.50, 84.31, 108.58, 132.26, 160.25, 191.62, 222.79, 253.09,
+                       277.59, 302.62, 327.21, 351.92, 376.96, 401.81, 426.60];
+const EXAMPLE_TROUGHS = [0.54, 24.48, 48.55, 72.51, 96.68, 117.34, 145.75, 176.13, 207.87, 238.09,
+                         265.01, 289.85, 314.79, 339.77, 364.87, 389.51, 414.33];
+const blankCycle = () => ({mode:'LD', L:'12:00', D:'12:00', start:'', phase:'Light'});
+// 0 h = Mon 5 Oct 2026 08:00 CDT = lights-on; 5 days LD 12:12, 5 cycles LD 15:15, then 168 h LL
+function exampleSettings(){
+  return {
+    t0:'2026-10-05 08:00', tz:DEFAULT_TZ,
+    peaks:EXAMPLE_PEAKS.map(v => v.toFixed(2)).join('\n'),
+    troughs:EXAMPLE_TROUGHS.map(v => v.toFixed(2)).join('\n'),
+    show_ld:true, extend_before:false, n_changes:2,
+    cycles:[{mode:'LD', L:'12:00', D:'12:00', start:'2026-10-05 08:00', phase:'Light'},
+            {mode:'LD', L:'15:00', D:'15:00', start:'2026-10-10 08:00', phase:'Light'},
+            {mode:'LL', L:'12:00', D:'12:00', start:'2026-10-16 14:00', phase:'Light'},
+            blankCycle(), blankCycle(), blankCycle()],
+    origin:'lights_on', origin_time:'', period:DEFAULT_PERIOD, rows_auto:true, title:EXAMPLE_TITLE
+  };
+}
+function defaultSettings(){
+  return {...exampleSettings(), plot:'double', rowlab:'number', show_values:false, link_peak:false, link_trough:false,
+          row_min:0, row_max:5, label_onsets:false, label_row_starts:false, x_major:X_MAJOR[3], x_minor:X_MINOR[0]};
+}
+function normalise(s){
+  const d = Object.assign(defaultSettings(), s || {});
+  d.tz = tzKey(d.tz);
+  const cyc = Array.isArray(d.cycles) ? d.cycles : [];
+  d.cycles = Array.from({length:MAX_CHANGES+1}, (_,i) => {
+    const c = Object.assign(blankCycle(), cyc[i] || {});
+    if(!['LD','LL','DD'].includes(c.mode)) c.mode = 'LD';
+    c.phase = /^d/i.test(c.phase) ? 'Dark' : 'Light';
+    for(const k of ['L','D']){ const v = parseDur(c[k]); c[k] = Number.isFinite(v) ? fmtDur2(v) : '12:00'; }
+    c.start = String(c.start||'').replace('T',' ');
+    return c;
+  });
+  d.n_changes = Math.max(0, Math.min(MAX_CHANGES, parseInt(d.n_changes,10) || 0));
+  if(typeof d.period === 'number') d.period = fmtDur(d.period);
+  const pm = Math.round(parseDur(d.period)*60);
+  d.period = (pm >= PERIOD_MIN && pm <= PERIOD_MAX) ? fmtDur2(pm/60) : DEFAULT_PERIOD;
+  d.t0 = String(d.t0||'').replace('T',' ');
+  d.origin_time = String(d.origin_time||'').replace('T',' ');
+  if(!['clock','lights_on','custom'].includes(d.origin)) d.origin = 'lights_on';
+  d.x_major = X_MAJOR[xMajorCount(d.x_major)]; d.x_minor = X_MINOR[xMinorCount(d.x_minor)];
+  return d;
+}
+let state;
+try{
+  const raw = localStorage.getItem(KEY);
+  // every session starts with the example data (title 'Example Data'), T = 24:00 and US Central Time;
+  // only the display options of the last session are kept
+  state = normalise(Object.assign(raw ? JSON.parse(raw) : {}, exampleSettings()));
+}catch(e){ state = normalise({}); }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
+
+/* ---------------- model ---------------- */
+function segIntervals(seg, begin, end){
+  const period = seg.L + seg.D;
+  if(period <= 0 || end <= begin) return [];
+  const parts = seg.startsLight ? [[seg.L,true],[seg.D,false]] : [[seg.D,false],[seg.L,true]];
+  let t = seg.startHour + Math.floor((begin - seg.startHour)/period)*period;
+  const out = [];
+  while(t < end){
+    for(const [len, light] of parts){
+      const a = Math.max(t, begin), b = Math.min(t+len, end);
+      if(len > 0 && b > a) out.push([a, b, light]);
+      t += len;
+    }
+  }
+  return out;
+}
+function ldIntervals(ld, lo, hi){
+  const out = [];
+  ld.segs.forEach((s, i) => {
+    const sb = (i === 0 && ld.extendBefore) ? -Infinity : s.startHour;
+    const se = i+1 < ld.segs.length ? ld.segs[i+1].startHour : Infinity;
+    out.push(...segIntervals(s, Math.max(lo, sb), Math.min(hi, se)));
+  });
+  return out;
+}
+function lightOnsetOnDate(startMs, startsLight, L, D, tz){
+  const period = L + D;
+  if(L <= 0 || period <= 0) return startMs;
+  const base = startsLight ? startMs : startMs - L*H;
+  const mid = midnightOf(startMs, tz, 0), next = midnightOf(startMs, tz, 1);
+  const k = Math.ceil((mid - base)/H/period - 1e-9);
+  const cand = base + k*period*H;
+  if(cand < next) return cand;
+  return base <= startMs ? base : startMs;
+}
+function compute(S){
+  const res = {clockErr:'', ldErrors:[], ldInfo:'', originErr:'', ld:null, period:24, periodErr:''};
+  const key = tzKey(S.tz);
+  res.tz = validTZ(key) ? key : null;
+  if(!res.tz) res.clockErr = `Time zone: “${S.tz}” is not a known time zone (e.g. Asia/Tokyo, America/Chicago, UTC, UTC+09:00).`;
+  if(res.tz){ const z = localToUtc(S.t0, res.tz, 'Clock time of 0 h'); if(z.error) res.clockErr = z.error; else res.zero = z.ms; }
+  const hasClock = res.zero !== undefined;
+  const pm = Math.round(parseDur(S.period)*60);
+  if(pm >= PERIOD_MIN && pm <= PERIOD_MAX) res.period = pm/60;
+  else res.periodErr = 'Period T must be between 0:01 and 240:00 (hh:mm).';
+  const hours = ms => (ms - res.zero)/H;
+
+  if(S.show_ld){
+    if(!hasClock) res.ldErrors.push('LD cycles: set a valid clock time of 0 h first.');
+    else{
+      const segs = []; let prev = null;
+      S.cycles.slice(0, 1 + S.n_changes).forEach((c, i) => {
+        const what = i === 0 ? 'First cycle' : `Change ${i}`;
+        let L, D, phase = c.phase;
+        if(c.mode === 'LL'){ L = 24; D = 0; phase = 'Light'; }
+        else if(c.mode === 'DD'){ L = 0; D = 24; phase = 'Dark'; }
+        else{
+          L = parseDur(c.L); D = parseDur(c.D);
+          if(!(L >= 0 && L*60 <= LD_MAX_MIN + 1e-9 && D >= 0 && D*60 <= LD_MAX_MIN + 1e-9) || L + D <= 0){
+            res.ldErrors.push(`${what}: L and D must be between 00:00 and 99:59 (hh:mm), and L + D longer than 00:00.`); return;
+          }
+        }
+        const st = localToUtc(c.start, res.tz, `${what} start`);
+        if(st.error){ res.ldErrors.push(st.error); return; }
+        if(prev !== null && st.ms <= prev){ res.ldErrors.push(`${what}: its start must be later than the start of the previous cycle.`); return; }
+        prev = st.ms;
+        segs.push({mode:c.mode, L, D, startsLight:phase === 'Light', startHour:hours(st.ms), startMs:st.ms, label:fmtLocal(st.ms, res.tz)});
+      });
+      if(!res.ldErrors.length && segs.length){
+        const f = segs[0];
+        const onset = lightOnsetOnDate(f.startMs, f.startsLight, f.L, f.D, res.tz);
+        res.ld = {segs, extendBefore:!!S.extend_before, originHour:hours(onset), originLabel:fmtLocal(onset, res.tz)};
+        res.ldInfo = segs.map((s, i) => {
+          const head = i === 0 ? 'First cycle' : `Change ${i}`;
+          return s.mode === 'LD'
+            ? `${head}: L ${fmtDur(s.L)} / D ${fmtDur(s.D)} (T = ${fmtDur(s.L+s.D)}), ${s.startsLight?'light':'dark'} period starts at ${s.label} = ${g(s.startHour)} h`
+            : `${head}: ${s.mode} from ${s.label} = ${g(s.startHour)} h`;
+        }).join('\n');
+      }
+    }
+  }
+
+  const kind = S.origin;
+  if(kind === 'lights_on' && res.ld){
+    const f = res.ld.segs[0], word = f.mode === 'LD' ? 'lights-on' : `start of ${f.mode}`;
+    res.origin = {hour:res.ld.originHour, x:`0 = ${word}, ${res.ld.originLabel.slice(11,16)}`, y:'0 = LD start',
+      info:`Day 0, 0 h = ${word} of the first cycle: ${res.ld.originLabel} (= ${g(res.ld.originHour)} h of the data)`};
+    return res;
+  }
+  if(kind === 'custom'){
+    if(!hasClock) res.originErr = 'Set a valid clock time of 0 h first.';
+    else{
+      const m = localToUtc(S.origin_time, res.tz, 'Actogram day 0, 0 h');
+      if(m.error) res.originErr = m.error;
+      else{ const h = hours(m.ms);
+        res.origin = {hour:h, x:`0 = ${wallText(m.ms, res.tz).slice(11,16)}`, y:'', info:`Day 0, 0 h = ${fmtLocal(m.ms, res.tz)} (= ${g(h)} h of the data)`};
+        return res; }
+    }
+  }
+  res.origin = hasClock
+    ? {hour:0, x:`0 = ${wallText(res.zero, res.tz).slice(11,16)}`, y:'', info:`Day 0, 0 h = ${fmtLocal(res.zero, res.tz)} (= 0 h of the data)`}
+    : {hour:0, x:'', y:'', info:'Day 0, 0 h = 0 h of the data'};
+  if(kind === 'lights_on') res.origin.note = S.show_ld ? 'The LD cycles are not valid yet, so 0 h of the data is used.'
+                                                     : 'The LD cycles are not shown, so 0 h of the data is used.';
+  return res;
+}
+
+/* ---------------- rows ---------------- */
+function autoRows(S, res){
+  const T = res.period, o = res.origin.hour;
+  const vals = parseList(S.peaks).vals.concat(parseList(S.troughs).vals);
+  const firstHour = Math.min(0, ...vals);
+  const lastHour = vals.length ? Math.max(...vals) : firstHour + 6*T;
+  const first = Math.floor((firstHour - o)/T);
+  const last = Math.max(Math.floor((lastHour - o)/T), first + 1);
+  return [first, Math.min(last, first + MAX_ROWS - 1)];
+}
+function rowRange(S, res){
+  const auto = autoRows(S, res);
+  if(S.rows_auto) return {lo:auto[0], hi:auto[1], auto, note: auto[1]-auto[0]+1 >= MAX_ROWS ? `Only the first ${MAX_ROWS} rows are drawn.` : ''};
+  let lo = parseInt(S.row_min, 10), hi = parseInt(S.row_max, 10), note = '';
+  if(!/^\s*-?\d+\s*$/.test(String(S.row_min)) || !/^\s*-?\d+\s*$/.test(String(S.row_max)))
+    return {lo:auto[0], hi:auto[1], auto, note:'Min and Max must be whole numbers; the automatic range is used.'};
+  if(lo > hi){ [lo, hi] = [hi, lo]; note = 'Min is larger than Max, so the two are swapped.'; }
+  if(hi - lo + 1 > MAX_ROWS){ hi = lo + MAX_ROWS - 1; note = `At most ${MAX_ROWS} rows are drawn.`; }
+  return {lo, hi, auto, note};
+}
+function linksOf(arr, T){
+  const a = [...arr].sort((x,y) => x-y), out = [];
+  for(let i = 0; i < a.length; i++){
+    let best = null, bd = Infinity;
+    for(let j = i+1; j < a.length; j++){ const dt = a[j]-a[i]; if(dt > 1.5*T) break; if(dt < 0.5*T) continue;
+      const d = Math.abs(dt - T); if(d < bd){ bd = d; best = a[j]; } }
+    if(best !== null) out.push([a[i], best]);
+  }
+  return out;
+}
+
+/* ---------------- chart (SVG) ---------------- */
+const C = {ink:'#222', axis:'#444', grid:'#C9C9C9', frame:'#555'};
+const FONT = '"Helvetica Neue",Helvetica,Arial,sans-serif';
+function buildSVG(S, res){
+  const T = res.period, dbl = S.plot === 'double', span = dbl ? 2*T : T, o = res.origin.hour;
+  const peaks = parseList(S.peaks).vals, troughs = parseList(S.troughs).vals, all = peaks.concat(troughs);
+  const rr = rowRange(S, res), firstRow = rr.lo, lastRow = rr.hi, nRows = lastRow - firstRow + 1;
+  const ld = S.show_ld ? res.ld : null;
+  const hasClock = res.zero !== undefined && !!res.tz;
+  const stamps = S.label_row_starts && hasClock, dateLabels = S.rowlab === 'date' && hasClock;
+  const unit = Math.abs(T - 24) < 1e-9 ? 'Day' : 'Cycle';
+  const rowStart = r => res.zero + Math.round((o + r*T)*60)*60000;
+  const mmmdd = p => `${MON[p.mo-1]} ${z2(p.d)}`;
+  const rowLab = r => {
+    if(stamps){ const p = partsIn(rowStart(r), res.tz); const t = `${mmmdd(p)} ${z2(p.h)}:${z2(p.mi)} ${p.abbr}`; return dateLabels ? t : `${r}   ${t}`; }
+    return dateLabels ? mmmdd(partsIn(rowStart(r), res.tz)) : String(r);
+  };
+
+  const VW = 1000, ml = stamps ? 176 : (dateLabels ? 90 : 74), mr = 196;
+  const plotW = VW - ml - mr;
+  const rh = Math.max(3, Math.min(26, 640/nRows));
+  const padTop = (S.label_onsets && ld) ? 0.85 : 0.6, padBot = 0.6;
+  const mt = 50, plotTop = mt, plotH = (nRows - 1 + padTop + padBot)*rh;
+  const Y = v => plotTop + (v - (firstRow - padTop))*rh;
+  const X = x => ml + x/span*plotW;
+  const VH = Math.round(plotTop + plotH + 78);
+  const out = [];
+  out.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${VW} ${VH}" width="${VW}" height="${VH}" font-family='${FONT}' role="img" aria-label="Actogram">`);
+  out.push(`<rect width="${VW}" height="${VH}" fill="#fff"/>`);
+  out.push(`<defs><clipPath id="pc"><rect x="${ml}" y="${plotTop}" width="${plotW}" height="${plotH}"/></clipPath></defs>`);
+  const title = S.title.trim() || `Actogram of peaks and troughs (${dbl?'double':'single'}-plotted, T = ${g(T)} h)`;
+  out.push(`<text x="${ml + plotW/2}" y="30" font-size="15" fill="${C.ink}" text-anchor="middle">${esc(title)}</text>`);
+
+  // LD bands (0.8 of a row, both halves of the double plot)
+  let multi = false;
+  if(ld){
+    multi = ld.segs.length > 1 || ld.segs[0].mode !== 'LD';
+    for(let r = firstRow; r <= lastRow; r++){
+      for(let half = 0; half < (dbl ? 2 : 1); half++){
+        const lo = o + (r + half)*T;
+        for(const [a, b, light] of ldIntervals(ld, lo, lo + T)){
+          const x0 = a - o - r*T;
+          out.push(`<rect x="${X(x0).toFixed(2)}" y="${Y(r - 0.4).toFixed(2)}" width="${((b - a)/span*plotW).toFixed(2)}" height="${(0.8*rh).toFixed(2)}" fill="${light?LIGHT:DARK}" fill-opacity="${light?0.9:0.45}"/>`);
+        }
+      }
+    }
+  }
+  // grid, ticks
+  const parts = xMajorCount(S.x_major) + 1;
+  const majors = Array.from({length:parts*(dbl?2:1) + 1}, (_, k) => k*T/parts);
+  let dec = [0,1,2,3].find(d => majors.every(v => Math.abs(+v.toFixed(d) - v) < 1e-9));
+  if(dec === undefined){ const step = majors.length > 1 ? majors[1]-majors[0] : T; dec = Math.max(2, Math.min(4, step < 1 ? Math.ceil(-Math.log10(step)) + 1 : 2)); }
+  for(const x of majors){
+    out.push(`<line x1="${X(x).toFixed(2)}" x2="${X(x).toFixed(2)}" y1="${plotTop}" y2="${plotTop+plotH}" stroke="${C.grid}" stroke-dasharray="4 3" stroke-width="0.8"/>`);
+    out.push(`<line x1="${X(x).toFixed(2)}" x2="${X(x).toFixed(2)}" y1="${plotTop+plotH}" y2="${plotTop+plotH+5}" stroke="${C.frame}"/>`);
+    out.push(`<text x="${X(x).toFixed(2)}" y="${plotTop+plotH+19}" font-size="12" fill="${C.axis}" text-anchor="middle">${x.toFixed(dec)}</text>`);
+  }
+  const minor = xMinorCount(S.x_minor);
+  if(minor){
+    for(let k = 0; k + 1 < majors.length; k++){
+      const step = (majors[k+1] - majors[k])/(minor + 1);
+      for(let j = 1; j <= minor; j++){ const x = X(majors[k] + j*step).toFixed(2);
+        out.push(`<line x1="${x}" x2="${x}" y1="${plotTop+plotH}" y2="${plotTop+plotH+3}" stroke="${C.frame}" stroke-width="0.6"/>`); }
+    }
+  }
+  const every = nRows > 40 ? Math.ceil(nRows/30) : 1;
+  for(let r = firstRow; r <= lastRow; r++){
+    out.push(`<line x1="${ml}" x2="${ml+plotW}" y1="${Y(r).toFixed(2)}" y2="${Y(r).toFixed(2)}" stroke="${C.grid}" stroke-dasharray="4 3" stroke-width="0.8"/>`);
+    out.push(`<line x1="${ml-5}" x2="${ml}" y1="${Y(r).toFixed(2)}" y2="${Y(r).toFixed(2)}" stroke="${C.frame}"/>`);
+    if((r - firstRow) % every === 0)
+      out.push(`<text x="${ml-8}" y="${(Y(r)+4).toFixed(2)}" font-size="${stamps?10:12}" fill="${C.axis}" text-anchor="end" xml:space="preserve">${esc(rowLab(r))}</text>`);
+  }
+  out.push(`<rect x="${ml}" y="${plotTop}" width="${plotW}" height="${plotH}" fill="none" stroke="${C.frame}"/>`);
+  const ylab = dateLabels ? 'Date (row start)' : `${unit} (T = ${g(T)} h${res.origin.y ? '; ' + res.origin.y : ''})`;
+  out.push(`<text transform="translate(18,${(plotTop + plotH/2).toFixed(1)}) rotate(-90)" font-size="13" fill="${C.ink}" text-anchor="middle">${esc(ylab)}</text>`);
+  const xlab = res.origin.x ? `Time within cycle (h; ${res.origin.x})` : 'Time within cycle (h)';
+  out.push(`<text x="${ml + plotW/2}" y="${plotTop+plotH+40}" font-size="13" fill="${C.ink}" text-anchor="middle">${esc(xlab)}</text>`);
+  if(hasClock) out.push(`<text x="${ml + plotW/2}" y="${plotTop+plotH+58}" font-size="10" fill="#555" text-anchor="middle">${esc(`${unit} 0, 0 h = ${fmtLocal(res.zero + o*H, res.tz)} (local, ${res.tz})`)}</text>`);
+
+  // optional: clock time (and date) at which each light / dark period begins
+  out.push(`<g clip-path="url(#pc)">`);
+  if(ld && S.label_onsets && hasClock){
+    const loAll = o + (firstRow - 1)*T, hiAll = o + (lastRow + (dbl ? 2 : 1))*T;
+    const merged = [];
+    for(const [a, b, light] of ldIntervals(ld, loAll, hiAll).sort((p, q) => p[0] - q[0])){
+      const m = merged[merged.length - 1];
+      if(m && m[2] === light && Math.abs(m[1] - a) < 1e-9) m[1] = b; else merged.push([a, b, light]);
+    }
+    for(const [a, , light] of merged){
+      if(a <= loAll + 1e-9) continue;
+      let row = Math.floor((a - o)/T + 1e-9), x = a - o - row*T;
+      if(row < firstRow) continue;
+      if(row > lastRow){ if(!(dbl && row - 1 === lastRow)) continue; row -= 1; x += T; }
+      const p = partsIn(res.zero + Math.round(a*60)*60000, res.tz);
+      out.push(`<text x="${(X(x) + 0.006*plotW).toFixed(2)}" y="${(Y(row - 0.42) - 1.5).toFixed(2)}" font-size="8" fill="${light ? '#7a5c00' : '#333'}" xml:space="preserve">${light?'L':'D'} ${z2(p.h)}:${z2(p.mi)}  ${MON[p.mo-1]}. ${p.d}</text>`);
+    }
+  }
+  // connecting lines
+  for(const [vals, on, col] of [[peaks, S.link_peak, PEAK], [troughs, S.link_trough, TROUGH]]){
+    if(!on) continue;
+    for(const [t1, t2] of linksOf(vals, T)){
+      for(let r = firstRow; r < lastRow; r++){
+        const x1 = t1 - o - r*T; if(x1 < 0 || x1 >= span) continue;
+        out.push(`<line x1="${X(x1).toFixed(2)}" y1="${Y(r).toFixed(2)}" x2="${X(x1 + (t2 - t1) - T).toFixed(2)}" y2="${Y(r+1).toFixed(2)}" stroke="${col}" stroke-width="1.3" opacity="0.6"/>`);
+      }
+    }
+  }
+  out.push(`</g>`);
+
+  // points (double plot: also at x + T in the row above)
+  const rad = Math.max(1.6, Math.min(4, rh*0.32));
+  for(const [vals, col] of [[peaks, PEAK], [troughs, TROUGH]]){
+    for(const h of vals){
+      const day = Math.floor((h - o)/T), x = h - o - day*T;
+      const pts = [];
+      if(day >= firstRow && day <= lastRow) pts.push([x, day]);
+      if(dbl && day - 1 >= firstRow && day - 1 <= lastRow) pts.push([x + T, day - 1]);
+      for(const [px, pr] of pts){
+        out.push(`<circle cx="${X(px).toFixed(2)}" cy="${Y(pr).toFixed(2)}" r="${rad.toFixed(2)}" fill="${col}"/>`);
+        if(S.show_values) out.push(`<text x="${X(px + 0.02*T).toFixed(2)}" y="${(Y(pr) - 4).toFixed(2)}" font-size="7.5" fill="${col}">${h.toFixed(1)}</text>`);
+      }
+    }
+  }
+  if(!all.length) out.push(`<text x="${ml + plotW/2}" y="${(plotTop + plotH/2 + 5).toFixed(1)}" font-size="14" fill="#666" text-anchor="middle">Paste peak and trough times to plot them</text>`);
+
+  // legend
+  const lx = ml + plotW + 18; let ly = plotTop + 6;
+  const items = [['dot', PEAK, 'Peaks'], ['dot', TROUGH, 'Troughs']];
+  if(ld){ const f = ld.segs[0];
+    items.push(['box', LIGHT, multi ? 'Light (L)' : `Light (L ${fmtDur(f.L)})`, 0.9]);
+    items.push(['box', DARK, multi ? 'Dark (D)' : `Dark (D ${fmtDur(f.D)})`, 0.45]); }
+  out.push(`<rect x="${lx-8}" y="${ly-6}" width="${mr-26}" height="${items.length*20+8}" fill="#fff" stroke="#ccc" rx="3"/>`);
+  for(const [kind, col, lab, op] of items){
+    ly += 14;
+    out.push(kind === 'dot' ? `<circle cx="${lx+6}" cy="${ly-4}" r="4" fill="${col}"/>`
+                            : `<rect x="${lx}" y="${ly-10}" width="13" height="11" fill="${col}" fill-opacity="${op}" stroke="#999" stroke-width="0.5"/>`);
+    out.push(`<text x="${lx+20}" y="${ly}" font-size="11.5" fill="${C.ink}">${esc(lab)}</text>`);
+    ly += 6;
+  }
+  if(ld){
+    ly += 22;
+    out.push(`<text x="${lx-8}" y="${ly}" font-size="10.5" font-weight="700" fill="${C.ink}">Conditions</text>`);
+    for(const s of ld.segs){ ly += 15;
+      const name = s.mode === 'LD' ? `L${fmtDur(s.L)} D${fmtDur(s.D)}` : s.mode;
+      out.push(`<text x="${lx-8}" y="${ly}" font-size="10" fill="#444">${esc(name)} from ${g(s.startHour)} h</text>`); }
+  }
+  out.push(`</svg>`);
+  return out.join('');
+}
+
+/* ---------------- wheel-style hh:mm field ---------------- */
+class TimeField {
+  // the hour column runs from minHour to hours - 1 and wraps; optional min/max of the value in minutes
+  constructor(input, opts){
+    Object.assign(this, {hours:100, minHour:0, maxMin:null, minMin:null, def:[12,0], onChange:()=>{}}, opts);
+    this.input = input; this.pop = null; this.acc = 0;
+    const btn = this.btn = document.createElement('button');
+    btn.type = 'button'; btn.textContent = '◷'; btn.title = 'Pick with the mouse (Alt+↓)';
+    btn.setAttribute('aria-label', 'Pick hours and minutes');
+    input.after(btn);
+    input.autocomplete = 'off';
+    input.addEventListener('input', () => this.onChange(input.value));
+    input.addEventListener('blur', () => this.normalise());
+    input.addEventListener('keydown', e => {
+      if(e.key === 'ArrowUp' || e.key === 'ArrowDown'){ e.preventDefault(); this.step(e.key === 'ArrowUp' ? 1 : -1); }
+      else if((e.altKey && e.key === 'ArrowDown') || e.key === 'F4'){ e.preventDefault(); this.open(); }
+      else if(e.key === 'Enter') this.normalise();
+    });
+    btn.addEventListener('click', () => this.pop ? this.close() : this.open());
+  }
+  setDisabled(off){ this.input.disabled = off; this.btn.disabled = off; if(off) this.close(); }
+  count(k){ return k === 'hour' ? this.hours - this.minHour : 60; }
+  value(){
+    const m = /^\s*(\d{1,3})\s*:?\s*(\d{2})\s*$/.exec(this.input.value); if(!m) return null;
+    const h = +m[1], mi = +m[2], t = h*60 + mi;
+    let ok = h >= this.minHour && h < this.hours && mi < 60;
+    if(ok && this.maxMin != null && t > this.maxMin) ok = false;
+    if(ok && this.minMin != null && t < this.minMin) ok = false;
+    return ok ? [h, mi] : null;
+  }
+  set(h, mi){
+    const c = this.count('hour');
+    h = this.minHour + (((h - this.minHour) % c) + c) % c; mi = ((mi % 60) + 60) % 60;
+    if(this.maxMin != null && h*60 + mi > this.maxMin) mi = Math.max(0, this.maxMin - h*60);
+    if(this.minMin != null && h*60 + mi < this.minMin) mi = Math.min(59, this.minMin - h*60);
+    const t = `${z2(h)}:${z2(mi)}`;
+    if(this.input.value !== t){ this.input.value = t; this.input.setAttribute('aria-invalid','false'); this.onChange(t); }
+  }
+  normalise(){ const v = this.value(); if(v) this.set(...v); }
+  step(d){
+    const [h, mi] = this.value() || this.def;
+    const colon = this.input.value.indexOf(':');
+    const onMin = colon >= 0 && this.input.selectionStart > colon;
+    onMin ? this.set(h, mi + d) : this.set(h + d, mi);
+    const c2 = this.input.value.indexOf(':');
+    onMin ? this.input.setSelectionRange(c2 + 1, c2 + 3) : this.input.setSelectionRange(0, c2);
+    this.sync();
+  }
+  open(){
+    if(this.pop || this.input.disabled) return;
+    if(TimeField.active) TimeField.active.close();
+    if(!this.value()) this.set(...this.def);
+    const [h, mi] = this.value();
+    this.pos = {hour:h - this.minHour, minute:mi}; this.target = {...this.pos};
+    const ROW = 26, COL = 52, W = 2*COL + 16, HH = 5*ROW + 8, dpr = window.devicePixelRatio || 1;
+    Object.assign(this, {ROW, COL, W, HH});
+    const pop = this.pop = document.createElement('div'); pop.className = 'wheel-pop';
+    const cv = this.cv = document.createElement('canvas');
+    cv.width = W*dpr; cv.height = HH*dpr; cv.style.width = W + 'px'; cv.style.height = HH + 'px';
+    cv.tabIndex = 0; cv.setAttribute('role', 'listbox'); cv.setAttribute('aria-label', 'Hours and minutes');
+    this.ctx = cv.getContext('2d'); this.ctx.scale(dpr, dpr);
+    pop.appendChild(cv); document.body.appendChild(pop);
+    const r = this.input.getBoundingClientRect();
+    let top = r.bottom + 2;
+    if(top + HH + 8 > window.innerHeight) top = r.top - HH - 8;
+    pop.style.left = Math.max(4, Math.min(r.left, window.innerWidth - W - 12)) + window.scrollX + 'px';
+    pop.style.top = Math.max(4, top) + window.scrollY + 'px';
+    const css = getComputedStyle(document.documentElement);
+    this.colInk = css.getPropertyValue('--ink').trim() || '#222';
+    this.colBand = css.getPropertyValue('--band').trim() || '#ececec';
+    cv.addEventListener('wheel', e => {
+      e.preventDefault();
+      this.acc += e.deltaMode === 1 ? e.deltaY*30 : e.deltaY;
+      if(Math.abs(this.acc) < 30) return;
+      const dir = this.acc > 0 ? 1 : -1; this.acc = 0;
+      const k = this.colAt(e.offsetX); this.moveTo(k, this.target[k] + dir);
+    }, {passive:false});
+    cv.addEventListener('pointerdown', e => {
+      const k = this.colAt(e.offsetX);
+      this.drag = {k, y:e.clientY, pos:this.pos[k], moved:false};
+      cv.setPointerCapture(e.pointerId);
+    });
+    cv.addEventListener('pointermove', e => {
+      const d = this.drag; if(!d) return;
+      const dy = e.clientY - d.y; if(Math.abs(dy) > 3) d.moved = true;
+      if(d.moved){ this.pos[d.k] = d.pos - dy/ROW; this.target[d.k] = Math.round(this.pos[d.k]); this.draw(); }
+    });
+    cv.addEventListener('pointerup', e => {
+      const d = this.drag; this.drag = null; if(!d) return;
+      if(d.moved) this.moveTo(d.k, Math.round(this.pos[d.k]));
+      else{ const mid = 4 + 5*ROW/2; this.moveTo(d.k, Math.round(this.pos[d.k]) + Math.round((e.offsetY - mid)/ROW)); }
+    });
+    this.keyCol = 'hour';
+    cv.addEventListener('keydown', e => {
+      if(e.key === 'ArrowUp'){ e.preventDefault(); this.moveTo(this.keyCol, this.target[this.keyCol] - 1); }
+      else if(e.key === 'ArrowDown'){ e.preventDefault(); this.moveTo(this.keyCol, this.target[this.keyCol] + 1); }
+      else if(e.key === 'ArrowLeft'){ e.preventDefault(); this.keyCol = 'hour'; }
+      else if(e.key === 'ArrowRight'){ e.preventDefault(); this.keyCol = 'minute'; }
+      else if(e.key === 'Escape' || e.key === 'Enter'){ e.preventDefault(); this.close(); this.input.focus(); }
+    });
+    this.outside = e => { if(!pop.contains(e.target) && e.target !== this.input && e.target !== this.btn) this.close(); };
+    document.addEventListener('pointerdown', this.outside, true);
+    TimeField.active = this;
+    this.draw(); cv.focus();
+  }
+  close(){
+    if(!this.pop) return;
+    cancelAnimationFrame(this.anim);
+    document.removeEventListener('pointerdown', this.outside, true);
+    this.pop.remove(); this.pop = null;
+    if(TimeField.active === this) TimeField.active = null;
+    this.normalise();
+  }
+  colAt(x){ return x < 8 + this.COL ? 'hour' : 'minute'; }
+  moveTo(k, t){
+    this.target[k] = t;
+    let [h, mi] = this.value() || this.def;
+    if(k === 'hour'){ const c = this.count('hour'); h = this.minHour + ((t % c) + c) % c; } else mi = ((t % 60) + 60) % 60;
+    this.set(h, mi); this.animate();
+  }
+  sync(){
+    if(!this.pop) return; const v = this.value(); if(!v) return;
+    for(const [k, cur] of [['hour', v[0] - this.minHour], ['minute', v[1]]]){
+      const c = this.count(k); let d = ((cur - this.target[k]) % c + c) % c; if(d > c/2) d -= c; this.target[k] += d;
+    }
+    this.animate();
+  }
+  animate(){
+    cancelAnimationFrame(this.anim);
+    const tick = () => {
+      let done = true;
+      for(const k of ['hour','minute']){ const gap = this.target[k] - this.pos[k];
+        if(Math.abs(gap) < 0.02) this.pos[k] = this.target[k]; else { this.pos[k] += gap*0.35; done = false; } }
+      this.draw(); if(!done && this.pop) this.anim = requestAnimationFrame(tick);
+    };
+    tick();
+  }
+  draw(){
+    if(!this.pop) return;
+    const {ctx, ROW, COL, W, HH} = this, mid = 4 + 5*ROW/2;
+    ctx.clearRect(0, 0, W, HH);
+    ctx.fillStyle = this.colBand; ctx.fillRect(4, mid - ROW/2, W - 8, ROW);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ['hour','minute'].forEach((k, col) => {
+      const c = this.count(k), pos = this.pos[k], x = 8 + COL*col + COL/2;
+      for(let off = -4; off <= 4; off++){
+        const v = Math.floor(pos) + off, dist = v - pos; if(Math.abs(dist) > 3) continue;
+        const t = Math.min(Math.abs(dist)/2.5, 1);
+        ctx.globalAlpha = 1 - 0.78*t; ctx.fillStyle = this.colInk;
+        ctx.font = `${Math.round(17 - 4*t)}px ui-monospace, Consolas, Menlo, monospace`;
+        ctx.fillText(z2(((v % c) + c) % c + (k === 'hour' ? this.minHour : 0)), x, mid + dist*ROW);
+      }
+    });
+    ctx.globalAlpha = 1;
+  }
+}
+TimeField.active = null;
+
+/* ---------------- date-time field + picker dialog ---------------- */
+function makeDTField(host, {get, set, title, compact = false, clearable = false, suggestions = null}){
+  host.classList.add('dt'); if(compact) host.classList.add('compact');
+  const input = document.createElement('input');
+  input.type = 'text'; input.readOnly = true; input.className = 'mono'; input.placeholder = 'YYYY-MM-DD hh:mm';
+  input.setAttribute('aria-label', title);
+  const btn = document.createElement('button'); btn.type = 'button'; btn.textContent = compact ? '📅' : '📅 Pick…';
+  btn.setAttribute('aria-label', `Pick ${title}`);
+  host.append(input, btn);
+  let clr = null;
+  if(clearable){ clr = document.createElement('button'); clr.type = 'button'; clr.textContent = 'Clear'; host.append(clr);
+    clr.addEventListener('click', () => set('')); }
+  const open = () => { if(input.disabled) return; Picker.open({text:get(), title, onOk:set, suggestions: suggestions ? suggestions() : null}); };
+  input.addEventListener('click', open);
+  input.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' ' || (e.altKey && e.key === 'ArrowDown')){ e.preventDefault(); open(); } });
+  btn.addEventListener('click', open);
+  return {
+    refresh(){ const v = get() || ''; if(input.value !== v) input.value = v; },
+    setDisabled(off){ input.disabled = off; btn.disabled = off; if(clr) clr.disabled = off; }
+  };
+}
+
+const Picker = (() => {
+  const dlg = $('dtDlg'), cal = $('dtCal');
+  let st = null;
+  const now = () => { const tz = st.tz; const p = partsIn(Date.now(), tz); return p; };
+  MONTHS.forEach((m, i) => $('dtMonth').add(new Option(m, i + 1)));
+  for(let h = 0; h < 24; h++) $('dtHour').add(new Option(z2(h), h));
+  for(let m = 0; m < 60; m++) $('dtMinute').add(new Option(z2(m), m));
+  ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => { const s = document.createElement('span'); s.className = 'wd'; s.textContent = d; cal.append(s); });
+  const days = Array.from({length:42}, () => { const b = document.createElement('button'); b.type = 'button'; cal.append(b); return b; });
+  days.forEach(b => b.addEventListener('click', () => { if(!b.textContent) return; st.sel = {y:st.view.y, mo:st.view.mo, d:+b.textContent}; draw(); update(); }));
+  for(const id of ['dtHour','dtMinute']){
+    const sel = $(id);
+    sel.addEventListener('change', update);
+    sel.addEventListener('wheel', e => { e.preventDefault(); const n = sel.options.length; sel.selectedIndex = (sel.selectedIndex + (e.deltaY > 0 ? 1 : -1) + n) % n; update(); }, {passive:false});
+  }
+  $('dtMonth').addEventListener('change', () => { st.view.mo = +$('dtMonth').value; draw(); });
+  $('dtYear').addEventListener('change', () => { st.view.y = +$('dtYear').value; draw(); });
+  const shift = d => { let {y, mo} = st.view; mo += d; if(mo < 1){ mo = 12; y--; } if(mo > 12){ mo = 1; y++; }
+    if(y < 1990 || y > st.maxYear) return; st.view = {y, mo}; draw(); };
+  $('dtPrev').addEventListener('click', () => shift(-1));
+  $('dtNext').addEventListener('click', () => shift(1));
+  $('dtToday').addEventListener('click', () => { const p = now(); st.view = {y:p.y, mo:p.mo}; st.sel = {y:p.y, mo:p.mo, d:p.d}; draw(); update(); });
+  $('dtNow').addEventListener('click', () => { const p = now(); st.view = {y:p.y, mo:p.mo}; st.sel = {y:p.y, mo:p.mo, d:p.d};
+    $('dtHour').value = p.h; $('dtMinute').value = p.mi; draw(); update(); });
+  document.querySelectorAll('input[name=dtChoice]').forEach(r => r.addEventListener('change', () => { st.choice = r.value; update(); }));
+  $('dtCancel').addEventListener('click', () => dlg.close());
+  $('dtOk').addEventListener('click', ok);
+  dlg.addEventListener('keydown', e => { if(e.key === 'Enter' && e.target.tagName !== 'BUTTON' && e.target.tagName !== 'SELECT'){ e.preventDefault(); ok(); } });
+
+  function baseText(){ const s = st.sel; return `${dayText(s.y, s.mo, s.d)} ${z2(+$('dtHour').value)}:${z2(+$('dtMinute').value)}`; }
+  function text(){ const b = baseText(); return st.choice && isAmbiguous(b, st.tz) ? `${b} ${st.choice}` : b; }
+  function draw(){
+    const {y, mo} = st.view;
+    $('dtMonth').value = mo; $('dtYear').value = y;
+    $('dtPrev').disabled = y === 1990 && mo === 1; $('dtNext').disabled = y === st.maxYear && mo === 12;
+    const first = new Date(Date.UTC(y, mo - 1, 1)).getUTCDay(), n = new Date(Date.UTC(y, mo, 0)).getUTCDate();
+    const t = now();
+    days.forEach((b, i) => {
+      const d = i - first + 1;
+      b.className = '';
+      if(d < 1 || d > n){ b.textContent = ''; b.tabIndex = -1; return; }
+      b.textContent = d; b.tabIndex = 0;
+      if(clockChangeOn(y, mo, d, st.tz)) b.classList.add('change');
+      if(y === t.y && mo === t.mo && d === t.d) b.classList.add('today');
+      if(st.sel.y === y && st.sel.mo === mo && st.sel.d === d) b.classList.add('sel');
+    });
+  }
+  function update(){
+    const s = st.sel, ch = clockChangeOn(s.y, s.mo, s.d, st.tz);
+    $('dtNote').textContent = ch
+      ? `${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(Date.UTC(s.y, s.mo-1, s.d)).getUTCDay()]} ${z2(s.d)} ${MON[s.mo-1]} ${s.y}: ${ch[1]}`
+      : `Shaded days: clock changes (${st.tz}).  Enter the local clock time of that day.`;
+    const base = baseText(), w = parseLocal(base), c = w ? candidates(w, st.tz) : [];
+    const box = $('dtChoice'), radios = box.querySelectorAll('input');
+    if(c.length === 2){
+      box.hidden = false;
+      c.forEach((x, i) => { radios[i].value = x.abbr; radios[i].checked = st.choice === x.abbr;
+        radios[i].nextElementSibling.textContent = `${x.abbr} – ${i ? 'second' : 'first'} (${utcOffsetLabel(x.ms, st.tz)})`; });
+      if(!c.some(x => x.abbr === st.choice)) st.choice = '';
+    }else{ box.hidden = true; st.choice = ''; }
+    const pv = $('dtPreview');
+    let msg;
+    if(c.length === 2 && !st.choice) msg = {error:`${base} happens twice in ${st.tz}: the clocks go back on this day.  Choose the first or the second one.`};
+    else msg = describeLocal(text(), st.tz);
+    st.valid = !msg.error;
+    pv.textContent = (st.valid ? '✔ ' : '✖ ') + (msg.error || msg.text).replace(/^Date\/time: /, '');
+    pv.className = st.valid ? 'ok' : 'bad';
+    $('dtOk').disabled = !st.valid;
+    const list = $('dtSuggList');
+    if(list.children.length){ const t = text(); [...list.children].forEach(b => b.classList.toggle('on', b.dataset.v === t)); }
+  }
+  function ok(){ update(); if(!st.valid) return; const t = text(); dlg.close(); st.onOk(t); }
+  function useText(t){
+    const {base, abbr} = splitAbbr(t), w = parseLocal(base); if(!w) return;
+    st.sel = {y:w.y, mo:w.mo, d:w.d}; st.view = {y:w.y, mo:w.mo}; st.choice = abbr;
+    $('dtHour').value = w.h; $('dtMinute').value = w.mi; draw(); update();
+  }
+  function open({text: initial, title, onOk, suggestions}){
+    const tzk = tzKey(state.tz);
+    if(!validTZ(tzk)){ ask('The time zone is not valid.', 'Choose a time zone first.', true); return; }
+    TimeField.active && TimeField.active.close();
+    const p0 = partsIn(Date.now(), tzk);
+    st = {tz:tzk, onOk, maxYear:p0.y + 5, choice:''};
+    const ys = $('dtYear'); ys.length = 0; for(let y = st.maxYear; y >= 1990; y--) ys.add(new Option(y, y));
+    $('dtTitle').textContent = `${title} – ${tzk}`;
+    const r = localToUtc(initial, tzk, '');
+    let p = p0;
+    if(r.ms !== undefined){ p = partsIn(r.ms, tzk); if(isAmbiguous(initial, tzk)) st.choice = p.abbr.toUpperCase(); }
+    st.sel = {y:p.y, mo:p.mo, d:p.d}; st.view = {y:p.y, mo:p.mo};
+    $('dtHour').value = p.h; $('dtMinute').value = p.mi;
+    // suggested times (ends of D or L of the previous LD cycle)
+    const box = $('dtSugg'), list = $('dtSuggList'); list.textContent = '';
+    if(suggestions){
+      const [sTitle, items, note] = suggestions;
+      box.hidden = false; $('dtSuggTitle').textContent = sTitle; $('dtSuggNote').textContent = note || '';
+      $('dtSuggHint').hidden = !items.length; list.hidden = !items.length;
+      let best = null, bd = Infinity;
+      items.forEach(([t, label]) => {
+        const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.dataset.v = t;
+        b.addEventListener('click', () => useText(t));
+        b.addEventListener('dblclick', () => { useText(t); ok(); });
+        list.append(b);
+        if(r.ms !== undefined){ const q = localToUtc(t, tzk, ''); const d = Math.abs((q.ms ?? 0) - r.ms); if(d < bd){ bd = d; best = b; } }
+      });
+      dlg.showModal();
+      (best || list.firstChild)?.scrollIntoView({block:'center'});
+    }else{ box.hidden = true; dlg.showModal(); }
+    draw(); update();
+  }
+  return {open};
+})();
+
+/* ---------------- yes/no dialog ---------------- */
+function ask(text, sub, infoOnly){
+  return new Promise(resolve => {
+    const dlg = $('askDlg');
+    $('askText').textContent = text; $('askSub').textContent = sub || '';
+    $('askYes').hidden = !!infoOnly; $('askNo').textContent = infoOnly ? 'OK' : 'No';
+    const done = v => { dlg.close(); resolve(v); };
+    $('askYes').onclick = () => done(true); $('askNo').onclick = () => done(false);
+    dlg.oncancel = e => { e.preventDefault(); done(false); };
+    dlg.showModal(); $('askNo').focus();
+  });
+}
+
+/* ---------------- suggested start times for LD -> LL / DD ---------------- */
+function startSuggestions(index){
+  const c = state.cycles[index];
+  if(index < 1 || !['LL','DD'].includes(c.mode) || state.cycles[index-1].mode !== 'LD') return null;
+  const mode = c.mode, word = mode === 'LL' ? 'lights-on' : 'lights-off';
+  const title = mode === 'LL' ? 'Suggested: end of D (lights-on) of the previous LD cycle'
+                              : 'Suggested: end of L (lights-off) of the previous LD cycle';
+  const res = compute({...state, show_ld:true, n_changes:index - 1});
+  if(!res.ld || res.ld.segs.length !== index) return [title, [], 'Fix the earlier cycles (and the clock time of 0 h) first; then the suggested times are listed here.'];
+  const prev = res.ld.segs[index - 1];
+  if(prev.L <= 0 || prev.D <= 0) return [title, [], `The previous LD cycle has no ${mode === 'LL' ? 'D' : 'L'} period, so there is nothing to suggest.`];
+  const period = prev.L + prev.D;
+  const first = mode === 'LL' ? prev.startHour + (prev.startsLight ? 0 : prev.D) : prev.startHour + (prev.startsLight ? prev.L : 0);
+  const items = [];
+  for(let k = 0; k < 120; k++){
+    const hour = first + k*period; if(hour <= prev.startHour) continue;
+    const ms = res.zero + Math.round(hour*60)*60000, p = partsIn(ms, res.tz);
+    const wd = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(Date.UTC(p.y, p.mo-1, p.d)).getUTCDay()];
+    items.push([wallString(ms, res.tz), `${wd} ${wallText(ms, res.tz)} ${p.abbr.padEnd(4)}  ${g(hour).padStart(8)} h  ${word}`]);
+  }
+  return [title, items, `L ${fmtDur(prev.L)} / D ${fmtDur(prev.D)} of the cycle that starts ${prev.label}.  You can still pick any other date/time above.`];
+}
+
+/* ---------------- UI ---------------- */
+let last = null;
+const dtFields = [];
+
+// time zone
+const tzSel = $('tzSelect'), tzOther = $('tzOther');
+TIME_ZONES.forEach(([k]) => tzSel.add(new Option(TZ_LABELS[k], k)));
+tzSel.add(new Option('Other (type a zone name or UTC offset)…', '__other'));
+function syncTZ(){
+  const k = tzKey(state.tz);
+  if(TZ_LABELS[k]){ tzSel.value = k; tzOther.hidden = true; }
+  else{ tzSel.value = '__other'; tzOther.hidden = false; if(document.activeElement !== tzOther) tzOther.value = state.tz; }
+}
+tzSel.addEventListener('change', () => {
+  if(tzSel.value === '__other'){ tzOther.hidden = false; tzOther.value = ''; tzOther.focus(); return; }
+  state.tz = tzSel.value; tzOther.hidden = true; changed();
+});
+tzOther.addEventListener('input', () => { state.tz = tzOther.value; changed(); });
+
+dtFields.push(makeDTField($('t0Field'), {get:() => state.t0, set:v => { state.t0 = v; changed(); }, title:'Clock time of 0 h'}));
+
+// peaks and troughs
+for(const k of ['peaks','troughs']) $(k).addEventListener('input', () => { state[k] = $(k).value; changed(); });
+$('loadExample').addEventListener('click', async () => {
+  const has = state.peaks.trim() || state.troughs.trim();
+  if(has && !await ask('Replace the current data with the example?', 'Peaks, troughs, the clock time of 0 h and the LD cycles are replaced; display options are kept.')) return;
+  state = normalise({...state, ...exampleSettings()}); loadAll();
+});
+$('clearData').addEventListener('click', async () => {
+  if(!state.peaks.trim() && !state.troughs.trim()) return;
+  if(!await ask('Clear all peak and trough values?', 'The clock time of 0 h and the LD cycles are kept.')) return;
+  state.peaks = ''; state.troughs = '';
+  if(state.title.trim() === EXAMPLE_TITLE) state.title = '';
+  loadAll();
+});
+
+// LD table
+const ldTable = $('ldTable'), cycleRows = [];
+for(let i = 0; i <= MAX_CHANGES; i++){
+  const name = i === 0 ? 'First' : `Change ${i}`;
+  const lab = document.createElement('span'); lab.textContent = name;
+  const mode = document.createElement('select'); ['LD','LL','DD'].forEach(m => mode.add(new Option(m, m)));
+  mode.setAttribute('aria-label', `${name}: condition`);
+  const mk = key => { const w = document.createElement('span'); w.className = 'tf'; const inp = document.createElement('input');
+    inp.type = 'text'; inp.className = 'mono'; inp.inputMode = 'numeric'; inp.setAttribute('aria-label', `${name}: ${key} (hh:mm)`);
+    w.append(inp); return [w, inp]; };
+  const [lWrap, lIn] = mk('L'), [dWrap, dIn] = mk('D');
+  const startHost = document.createElement('span');
+  const phase = document.createElement('select'); phase.add(new Option('Light','Light')); phase.add(new Option('Dark','Dark'));
+  phase.setAttribute('aria-label', `${name}: begins with`);
+  ldTable.append(lab, mode, lWrap, dWrap, startHost, phase);
+  const c = () => state.cycles[i];
+  const tfL = new TimeField(lIn, {hours:100, def:[12,0], onChange:v => { c().L = v; lIn.setAttribute('aria-invalid', tfL.value() ? 'false' : 'true'); changed(); }});
+  const tfD = new TimeField(dIn, {hours:100, def:[12,0], onChange:v => { c().D = v; dIn.setAttribute('aria-invalid', tfD.value() ? 'false' : 'true'); changed(); }});
+  const dt = makeDTField(startHost, {get:() => c().start, set:v => { c().start = v; changed(); }, compact:true,
+    title:`${i === 0 ? 'First cycle' : 'Change ' + i} – start`, suggestions: i > 0 ? () => startSuggestions(i) : null});
+  dtFields.push(dt);
+  mode.addEventListener('change', () => { c().mode = mode.value; changed(); });
+  phase.addEventListener('change', () => { c().phase = phase.value; changed(); });
+  cycleRows.push({els:[lab, mode, lWrap, dWrap, startHost, phase], mode, phase, lIn, dIn, tfL, tfD});
+}
+for(let n = 0; n <= MAX_CHANGES; n++) $('nChanges').add(new Option(n, n));
+$('nChanges').addEventListener('change', () => { state.n_changes = +$('nChanges').value; changed(); });
+$('showLD').addEventListener('change', () => { state.show_ld = $('showLD').checked; changed(); });
+$('extendBefore').addEventListener('change', () => { state.extend_before = $('extendBefore').checked; changed(); });
+
+// origin
+document.querySelectorAll('input[name=origin]').forEach(r => r.addEventListener('change', () => { state.origin = r.value; changed(); }));
+const originField = makeDTField($('originField'), {get:() => state.origin_time, set:v => { state.origin_time = v; changed(); }, title:'Actogram day 0, 0 h', clearable:true});
+
+// plot settings
+$('title').addEventListener('input', () => { state.title = $('title').value; changed(); });
+const periodTF = new TimeField($('period'), {hours:PERIOD_MAX/60 + 1, minHour:0, maxMin:PERIOD_MAX, minMin:PERIOD_MIN, def:[24,0],
+  onChange:v => { state.period = v; changed(); }});
+for(const nm of ['plot','rowlab']) document.querySelectorAll(`input[name=${nm}]`).forEach(r => r.addEventListener('change', () => { state[nm] = r.value; changed(); }));
+X_MAJOR.forEach(t => $('xMajor').add(new Option(t, t)));
+X_MINOR.forEach(t => $('xMinor').add(new Option(t, t)));
+$('xMajor').addEventListener('change', () => { state.x_major = $('xMajor').value; changed(); });
+$('xMinor').addEventListener('change', () => { state.x_minor = $('xMinor').value; changed(); });
+for(const id of ['show_values','link_peak','link_trough','label_onsets','label_row_starts'])
+  $(id).addEventListener('change', () => { state[id] = $(id).checked; changed(); });
+
+// rows
+$('rows_auto').addEventListener('change', () => {
+  state.rows_auto = $('rows_auto').checked;
+  if(!state.rows_auto && last){ const a = rowRange({...state, rows_auto:true}, last).auto; state.row_min = a[0]; state.row_max = a[1]; }
+  changed(true);
+});
+for(const id of ['row_min','row_max']){
+  const el = $(id);
+  el.addEventListener('input', () => { state[id] = el.value; changed(); });
+  el.addEventListener('wheel', e => { if(el.disabled) return; e.preventDefault();
+    const v = (parseInt(el.value, 10) || 0) + (e.deltaY < 0 ? 1 : -1); el.value = Math.max(-9999, Math.min(9999, v)); state[id] = el.value; changed(); }, {passive:false});
+}
+
+/* ---------------- refresh ---------------- */
+let pending = false;
+function changed(full){ save(); if(full) syncControls(); if(!pending){ pending = true; requestAnimationFrame(() => { pending = false; refresh(); }); } }
+function syncControls(){                       // state -> every control (after loading settings etc.)
+  syncTZ();
+  for(const k of ['peaks','troughs']) if($(k).value !== state[k]) $(k).value = state[k];
+  $('showLD').checked = state.show_ld; $('extendBefore').checked = state.extend_before; $('nChanges').value = state.n_changes;
+  cycleRows.forEach((row, i) => { const c = state.cycles[i];
+    row.mode.value = c.mode; row.phase.value = c.phase;
+    if(document.activeElement !== row.lIn) row.lIn.value = c.L;
+    if(document.activeElement !== row.dIn) row.dIn.value = c.D; });
+  document.querySelectorAll('input[name=origin]').forEach(r => r.checked = r.value === state.origin);
+  $('title').value = state.title;
+  if(document.activeElement !== $('period')) $('period').value = state.period;
+  document.querySelectorAll('input[name=plot]').forEach(r => r.checked = r.value === state.plot);
+  document.querySelectorAll('input[name=rowlab]').forEach(r => r.checked = r.value === state.rowlab);
+  $('xMajor').value = state.x_major; $('xMinor').value = state.x_minor;
+  for(const id of ['show_values','link_peak','link_trough','label_onsets','label_row_starts','rows_auto']) $(id).checked = !!state[id];
+  $('row_min').value = state.row_min; $('row_max').value = state.row_max;
+}
+function updateCount(k){
+  const p = parseList(state[k]), el = $(k + 'Count');
+  if(p.bad.length){ el.className = 'count bad'; el.textContent = `Not a number: ${p.bad.slice(0,3).map(b => '“' + b + '”').join(', ')}${p.bad.length > 3 ? ' …' : ''}`; $(k).setAttribute('aria-invalid','true'); }
+  else{ el.className = 'count' + (p.vals.length ? ' ok' : ''); el.textContent = p.vals.length ? `${p.vals.length} value${p.vals.length === 1 ? '' : 's'}` : 'No values yet'; $(k).setAttribute('aria-invalid','false'); }
+}
+function refresh(){
+  const res = last = compute(state);
+  $('clockErr').textContent = res.clockErr;
+  updateCount('peaks'); updateCount('troughs');
+  $('ldBody').hidden = !state.show_ld;
+  cycleRows.forEach((row, i) => {
+    const vis = i <= state.n_changes, ldm = state.cycles[i].mode === 'LD';
+    row.els.forEach(el => el.hidden = !vis);
+    row.tfL.setDisabled(!ldm); row.tfD.setDisabled(!ldm); row.phase.disabled = !ldm;
+  });
+  $('ldErr').textContent = state.show_ld ? res.ldErrors.join('\n') : '';
+  $('ldInfo').textContent = state.show_ld ? res.ldInfo : '';
+  originField.setDisabled(state.origin !== 'custom');
+  $('originErr').textContent = res.originErr;
+  $('originInfo').textContent = res.origin.info + (res.origin.note ? '\n' + res.origin.note : '');
+  $('periodErr').textContent = res.periodErr;
+  $('period').setAttribute('aria-invalid', res.periodErr ? 'true' : 'false');
+  dtFields.forEach(f => f.refresh());
+  $('chartHost').innerHTML = buildSVG(state, res).replace('<svg ', '<svg id="chart" ');
+  const rr = rowRange(state, res);
+  $('rowsInfo').textContent = `${rr.lo} to ${rr.hi}  (${rr.hi - rr.lo + 1} rows)${state.rows_auto ? '  automatic' : ''}`;
+  $('rowsNote').textContent = rr.note;
+  $('row_min').disabled = $('row_max').disabled = state.rows_auto;
+  updateAdjust();
+}
+function loadAll(){ save(); syncControls(); refresh(); }
+
+/* ---------------- fine-tuning (1-minute steps) ---------------- */
+const hasClock = () => !!(last && last.zero !== undefined && last.tz);
+const adj = {
+  t0: {ok:hasClock, get:() => last.zero, set:ms => { state.t0 = wallString(ms, last.tz); }},
+  origin: {ok:hasClock, get:() => last.zero + Math.round(last.origin.hour*60)*60000,
+           set:ms => { state.origin = 'custom'; state.origin_time = wallString(ms, last.tz);
+                       document.querySelectorAll('input[name=origin]').forEach(r => r.checked = r.value === 'custom'); }},
+  period: {ok:() => true, get:() => Math.round(last.period*60),
+           set:m => { state.period = fmtDur2(Math.min(PERIOD_MAX, Math.max(PERIOD_MIN, Math.round(m)))/60);
+                      $('period').value = state.period; periodTF.sync(); }}
+};
+function applyAdj(key, v){ adj[key].set(v); save(); last = compute(state); refresh(); }
+function nudge(key, dMin){ if(!last) refresh(); const a = adj[key]; if(!a.ok()) return; applyAdj(key, key === 'period' ? a.get() + dMin : a.get() + dMin*60000); }
+function updateAdjust(){
+  document.querySelectorAll('.adj[data-key]').forEach(row => {
+    const key = row.dataset.key, a = adj[key], ok = a.ok();
+    row.querySelectorAll('button,input').forEach(el => el.disabled = !ok);
+    const val = row.querySelector('.adj-val');
+    if(!ok){ val.textContent = 'Set a valid clock time and time zone first'; return; }
+    if(key === 'period'){ const m = a.get(); val.textContent = `${fmtDur2(m/60)}  (${(m/60).toFixed(3)} h)`;
+      const r = row.querySelector('input[type=range]'); if(document.activeElement !== r) r.value = m; }
+    else val.textContent = fmtLocal(a.get(), last.tz) + (key === 'origin' ? `  (= ${g(last.origin.hour)} h of the data)` : '');
+  });
+}
+function holdable(btn, fn){
+  let t1 = null, t2 = null;
+  const stop = () => { clearTimeout(t1); clearInterval(t2); t1 = t2 = null; };
+  btn.addEventListener('pointerdown', e => { if(e.button !== 0 || btn.disabled) return; e.preventDefault(); fn();
+    t1 = setTimeout(() => { t2 = setInterval(() => btn.disabled ? stop() : fn(), 70); }, 400);
+    try{ btn.setPointerCapture(e.pointerId); }catch(_){} });
+  ['pointerup','pointercancel','lostpointercapture'].forEach(ev => btn.addEventListener(ev, stop));
+  btn.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); fn(); } });
+}
+document.querySelectorAll('.adj[data-key]').forEach(row => {
+  const key = row.dataset.key, r = row.querySelector('input[type=range]');
+  row.querySelectorAll('button[data-d]').forEach(b => holdable(b, () => nudge(key, +b.dataset.d)));
+  if(key === 'period'){ r.addEventListener('input', () => applyAdj('period', +r.value)); return; }
+  let anchor = null;
+  const grab = () => { if(anchor === null && adj[key].ok()) anchor = adj[key].get() - (+r.value)*60000; };
+  r.addEventListener('pointerdown', grab); r.addEventListener('keydown', grab); r.addEventListener('focus', grab);
+  r.addEventListener('input', () => { grab(); if(anchor !== null) applyAdj(key, anchor + (+r.value)*60000); });
+  const reset = () => { r.value = 0; anchor = null; };
+  r.addEventListener('change', reset); r.addEventListener('blur', reset);
+});
+
+/* ---------------- files: figure and settings ---------------- */
+let downloads = null; const statusEl = $('status');
+async function getCap(name){
+  for(let i = 0; i < 15 && !(window.claude && window.claude.use); i++) await new Promise(r => setTimeout(r, 100));
+  if(!(window.claude && window.claude.use)) return null;
+  try{ return await window.claude.use(name); }catch(e){ return null; }
+}
+const fileBase = () => (state.title.trim() || 'actogram').replace(/[\\\/:*?"<>|\s]+/g, '_').slice(0, 80);
+function reportSave(p){
+  p.then(() => { statusEl.textContent = 'Saved'; })
+   .catch(e => { const c = e && e.code;
+     statusEl.textContent = c === 'declined' ? 'Save cancelled' : c === 'rate_limited' ? 'A save prompt is already open. Close it and try again.' : 'Saving isn’t available in this view.'; });
+}
+$('saveSvg').addEventListener('click', () => { if(!downloads) return; statusEl.textContent = '';
+  reportSave(downloads.save({filename:fileBase() + '.svg', data:'<?xml version="1.0" encoding="UTF-8"?>\n' + buildSVG(state, compute(state))})); });
+$('savePng').addEventListener('click', () => {
+  if(!downloads) return; statusEl.textContent = 'Rendering image…';
+  const svg = buildSVG(state, compute(state));
+  const m = svg.match(/viewBox="0 0 (\d+(?:\.\d+)?) (\d+(?:\.\d+)?)"/), w = +m[1], h = +m[2], sc = 3;
+  const img = new Image();
+  img.onload = () => {
+    const cv = document.createElement('canvas'); cv.width = w*sc; cv.height = h*sc;
+    const ctx = cv.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height); ctx.drawImage(img, 0, 0, cv.width, cv.height);
+    cv.toBlob(b => { if(!b){ statusEl.textContent = 'Couldn’t render the PNG. Try SVG instead.'; return; }
+      statusEl.textContent = ''; reportSave(downloads.save({filename:fileBase() + '.png', data:b})); }, 'image/png');
+  };
+  img.onerror = () => { statusEl.textContent = 'Couldn’t render the PNG. Try SVG instead.'; };
+  img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+});
+$('saveSettings').addEventListener('click', () => { if(!downloads) return; statusEl.textContent = '';
+  reportSave(downloads.save({filename:'actogram_settings.json', data:JSON.stringify(state, null, 2)})); });
+$('loadSettings').addEventListener('click', () => $('settingsFile').click());
+$('settingsFile').addEventListener('change', () => {
+  const f = $('settingsFile').files[0]; if(!f) return;
+  const rd = new FileReader();
+  rd.onload = () => { try{ state = normalise(JSON.parse(rd.result)); loadAll(); statusEl.textContent = `Loaded ${f.name}`; }
+                      catch(e){ statusEl.textContent = 'That file is not a settings file (JSON).'; }
+                      $('settingsFile').value = ''; };
+  rd.readAsText(f);
+});
+// outside claude.ai (GitHub Pages, Netlify, a local file, Colab …): an ordinary browser download
+const browserDownloads = {
+  save({filename, data}){
+    return new Promise(resolve => {
+      const type = /\.svg$/i.test(filename) ? 'image/svg+xml' : /\.json$/i.test(filename) ? 'application/json' : 'application/octet-stream';
+      const blob = data instanceof Blob ? data : new Blob([data], {type});
+      const url = URL.createObjectURL(blob), a = document.createElement('a');
+      a.href = url; a.download = filename; document.body.append(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 5000); resolve();
+    });
+  }
+};
+getCap('downloads').then(d => { downloads = d || browserDownloads; $('saveFig').hidden = false; $('saveSettings').hidden = false; });
+
+loadAll();
+})();
+</script>
+</body>
+</html>
