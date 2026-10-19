@@ -4,7 +4,7 @@
 
 Actogram Plotter draws a double‑plotted (or single‑plotted) actogram from peak and trough times of a rhythm, together with the light/dark conditions of the experiment. It does no rhythm analysis: you enter the times, it draws the figure.
 
-The app runs entirely in your web browser from the link above. There is nothing to install and no account is needed.
+The app runs entirely in your web browser from the link above. There is nothing to install and no account is needed. Everything you enter stays in your browser: no data is uploaded or sent anywhere, and the only external request is for the web font.
 
 ## Quick start
 
