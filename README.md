@@ -1,5 +1,5 @@
-Actogram-like visualization tracking circadian peak and trough times
 # Actogram Plotter
+**Actogram-like visualization of periodic activities - tracking peaks and troughs of a circadin rhythm**
 
 **▶ Open the app: https://dxda6216.github.io/actogram_plotter/**
 
