@@ -190,7 +190,17 @@ dialog::backdrop{background:rgba(10,15,25,.35)}
       <div class="row" style="margin-top:8px">
         <button type="button" id="loadExample">Load example</button>
         <button type="button" id="clearData">Clear data</button>
+        <button type="button" id="clearAll">Clear all</button>
       </div>
+      <p class="hint">Clear data empties the two lists. Clear all also blanks the clock time of 0 h, the sample placement and every LD start date, and resets the cycles to LD 12:00 / 12:00 followed by LL.</p>
+    </div>
+
+    <div class="block">
+      <h2>Sample placement</h2>
+      <div class="clock"><span>Placed at</span><div id="placedField"></div></div>
+      <p class="hint">Date and time when the samples were put into the light/dark conditions (LL, DD or LD). It is marked with an orange asterisk in the actogram (0 h of the data: green asterisk). Leave it empty if not needed.</p>
+      <p class="errs" id="placedErr"></p>
+      <p class="info" id="placedInfo"></p>
     </div>
 
     <div class="block">
@@ -216,6 +226,7 @@ dialog::backdrop{background:rgba(10,15,25,.35)}
       <div class="radios">
         <label class="chk"><input type="radio" name="origin" value="clock">0 h of the data (time zero)</label>
         <label class="chk"><input type="radio" name="origin" value="lights_on">Lights-on of the first LD cycle on its start date (LL/DD: its start)</label>
+        <label class="chk"><input type="radio" name="origin" value="placed_midnight">00:00 (midnight) on the day the sample was placed</label>
         <label class="chk"><input type="radio" name="origin" value="custom">Another date/time:</label>
       </div>
       <div id="originField" style="margin:6px 0 0 22px"></div>
@@ -241,6 +252,7 @@ dialog::backdrop{background:rgba(10,15,25,.35)}
             <label class="chk"><input type="checkbox" id="link_trough">Connect troughs</label></div>
           <label class="chk"><input type="checkbox" id="label_onsets">Label the start times of light and dark periods</label>
           <label class="chk"><input type="checkbox" id="label_row_starts">Label the start date/time of each cycle (y axis)</label>
+          <label class="chk"><input type="checkbox" id="mark_times">Mark 0 h of the data (green *) and the sample placement (orange *)</label>
         </div>
       </div>
     </div>
@@ -344,6 +356,9 @@ const H = 3600000, MAX_CHANGES = 5, LD_MAX_MIN = 99*60 + 59;
 const PERIOD_MIN = 1, PERIOD_MAX = 240*60, MAX_ROWS = 1000;
 const DEFAULT_TZ = 'America/Chicago', DEFAULT_PERIOD = '24:00', EXAMPLE_TITLE = 'Example Data';
 const LIGHT = '#fff3b0', DARK = '#8c8c8c', PEAK = '#d32f2f', TROUGH = '#1f4fd1';
+const PLACED = '#f57c00', ZERO = '#2e7d32';   // asterisks - orange: samples placed; green: 0 h of the data
+const asterisk = (cx, cy, r, col) => [90, 30, 150].map(a => { const dx = r*Math.cos(a*Math.PI/180), dy = r*Math.sin(a*Math.PI/180);
+  return `<line x1="${(cx-dx).toFixed(2)}" y1="${(cy-dy).toFixed(2)}" x2="${(cx+dx).toFixed(2)}" y2="${(cy+dy).toFixed(2)}" stroke="${col}" stroke-width="1.8" stroke-linecap="round"/>`; }).join('');
 const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const WDAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
@@ -516,28 +531,27 @@ const xMajorCount = v => { const t = String(v).trim(); if(/^no/i.test(t)) return
 const xMinorCount = v => { const m = /^\s*(\d+)/.exec(String(v)); return m ? Math.max(0, Math.min(11, +m[1])) : 0; };
 
 /* ---------------- settings (same keys as the desktop app's JSON) ---------------- */
-const EXAMPLE_PEAKS = [12.47, 36.75, 60.50, 84.31, 108.58, 132.26, 160.25, 191.62, 222.79, 253.09,
-                       277.59, 302.62, 327.21, 351.92, 376.96, 401.81, 426.60];
-const EXAMPLE_TROUGHS = [0.54, 24.48, 48.55, 72.51, 96.68, 117.34, 145.75, 176.13, 207.87, 238.09,
-                         265.01, 289.85, 314.79, 339.77, 364.87, 389.51, 414.33];
+const EXAMPLE_PEAKS = [8.47, 32.75, 56.50, 80.31, 104.58, 128.26, 156.25, 187.62, 218.79, 249.09, 273.59, 298.62, 323.21, 347.92, 372.96, 397.81, 422.60];
+const EXAMPLE_TROUGHS = [20.48, 44.55, 68.51, 92.68, 113.34, 141.75, 172.13, 203.87, 234.09, 261.01, 285.85, 310.79, 335.77, 360.87, 385.51, 410.33];
 const blankCycle = () => ({mode:'LD', L:'12:00', D:'12:00', start:'', phase:'Light'});
-// 0 h = Mon 5 Oct 2026 08:00 CDT = lights-on; 5 days LD 12:12, 5 cycles LD 15:15, then 168 h LL
+// samples placed 4 Oct 2026 13:27; LD 12:12 from 4 Oct 08:00, LD 15:15 from 10 Oct 08:00, LL from 16 Oct 14:00; 0 h = 5 Oct 10:15
 function exampleSettings(){
   return {
-    t0:'2026-10-05 08:00', tz:DEFAULT_TZ,
+    t0:'2026-10-05 10:15', tz:DEFAULT_TZ,
     peaks:EXAMPLE_PEAKS.map(v => v.toFixed(2)).join('\n'),
     troughs:EXAMPLE_TROUGHS.map(v => v.toFixed(2)).join('\n'),
     show_ld:true, extend_before:false, n_changes:2,
-    cycles:[{mode:'LD', L:'12:00', D:'12:00', start:'2026-10-05 08:00', phase:'Light'},
+    cycles:[{mode:'LD', L:'12:00', D:'12:00', start:'2026-10-04 08:00', phase:'Light'},
             {mode:'LD', L:'15:00', D:'15:00', start:'2026-10-10 08:00', phase:'Light'},
             {mode:'LL', L:'12:00', D:'12:00', start:'2026-10-16 14:00', phase:'Light'},
             blankCycle(), blankCycle(), blankCycle()],
+    placed:'2026-10-04 13:27',
     origin:'lights_on', origin_time:'', period:DEFAULT_PERIOD, rows_auto:true, title:EXAMPLE_TITLE
   };
 }
 function defaultSettings(){
   return {...exampleSettings(), plot:'double', rowlab:'number', show_values:false, link_peak:false, link_trough:false,
-          row_min:0, row_max:5, label_onsets:false, label_row_starts:false, x_major:X_MAJOR[3], x_minor:X_MINOR[0]};
+          row_min:0, row_max:5, label_onsets:false, label_row_starts:false, mark_times:true, x_major:X_MAJOR[3], x_minor:X_MINOR[0]};
 }
 function normalise(s){
   const d = Object.assign(defaultSettings(), s || {});
@@ -557,7 +571,9 @@ function normalise(s){
   d.period = (pm >= PERIOD_MIN && pm <= PERIOD_MAX) ? fmtDur2(pm/60) : DEFAULT_PERIOD;
   d.t0 = String(d.t0||'').replace('T',' ');
   d.origin_time = String(d.origin_time||'').replace('T',' ');
-  if(!['clock','lights_on','custom'].includes(d.origin)) d.origin = 'lights_on';
+  d.placed = String(d.placed||'').replace('T',' ');
+  d.mark_times = d.mark_times !== false;
+  if(!['clock','lights_on','placed_midnight','custom'].includes(d.origin)) d.origin = 'lights_on';
   d.x_major = X_MAJOR[xMajorCount(d.x_major)]; d.x_minor = X_MINOR[xMinorCount(d.x_minor)];
   return d;
 }
@@ -652,7 +668,21 @@ function compute(S){
     }
   }
 
+  // when the samples were put into the light/dark conditions (optional)
+  res.placedErr = ''; res.placedHour = null;
+  if(String(S.placed||'').trim()){
+    if(!hasClock) res.placedErr = 'Sample placement: set a valid clock time of 0 h first.';
+    else{ const p = localToUtc(S.placed, res.tz, 'Sample placed at');
+      if(p.error) res.placedErr = p.error;
+      else{ res.placedMs = p.ms; res.placedHour = hours(p.ms); res.placedLabel = fmtLocal(p.ms, res.tz); } }
+  }
+
   const kind = S.origin;
+  if(kind === 'placed_midnight' && res.placedHour !== null){
+    const mid = midnightOf(res.placedMs, res.tz, 0), h = hours(mid);
+    res.origin = {hour:h, x:'0 = 00:00', y:'', info:`Day 0, 0 h = 00:00 on the day the sample was placed: ${fmtLocal(mid, res.tz)} (= ${g(h)} h of the data)`};
+    return res;
+  }
   if(kind === 'lights_on' && res.ld){
     const f = res.ld.segs[0], word = f.mode === 'LD' ? 'lights-on' : `start of ${f.mode}`;
     res.origin = {hour:res.ld.originHour, x:`0 = ${word}, ${res.ld.originLabel.slice(11,16)}`, y:'0 = LD start',
@@ -672,6 +702,7 @@ function compute(S){
   res.origin = hasClock
     ? {hour:0, x:`0 = ${wallText(res.zero, res.tz).slice(11,16)}`, y:'', info:`Day 0, 0 h = ${fmtLocal(res.zero, res.tz)} (= 0 h of the data)`}
     : {hour:0, x:'', y:'', info:'Day 0, 0 h = 0 h of the data'};
+  if(kind === 'placed_midnight') res.origin.note = 'The sample placement time is not set (or not valid), so 0 h of the data is used.';
   if(kind === 'lights_on') res.origin.note = S.show_ld ? 'The LD cycles are not valid yet, so 0 h of the data is used.'
                                                      : 'The LD cycles are not shown, so 0 h of the data is used.';
   return res;
@@ -681,8 +712,9 @@ function compute(S){
 function autoRows(S, res){
   const T = res.period, o = res.origin.hour;
   const vals = parseList(S.peaks).vals.concat(parseList(S.troughs).vals);
-  const firstHour = Math.min(0, ...vals);
-  const lastHour = vals.length ? Math.max(...vals) : firstHour + 6*T;
+  const marks = res.placedHour !== null && res.placedHour !== undefined ? [res.placedHour] : [];
+  const firstHour = Math.min(0, ...vals, ...marks);
+  const lastHour = vals.length ? Math.max(...vals, ...marks) : firstHour + 6*T;
   const first = Math.floor((firstHour - o)/T);
   const last = Math.max(Math.floor((lastHour - o)/T), first + 1);
   return [first, Math.min(last, first + MAX_ROWS - 1)];
@@ -817,6 +849,21 @@ function buildSVG(S, res){
   }
   out.push(`</g>`);
 
+  // asterisks: 0 h of the data (green) and the sample placement (orange)
+  const markItems = [], markSvg = [];
+  if(S.mark_times){
+    const marks = [];
+    if(res.placedHour !== null && res.placedHour !== undefined) marks.push([res.placedHour, PLACED, 'Sample placed']);
+    if(hasClock) marks.push([0, ZERO, '0 h of the data']);
+    for(const [h, col, lab] of marks){
+      const day = Math.floor((h - o)/T + 1e-9), x = h - o - day*T, spots = [];
+      if(day >= firstRow && day <= lastRow) spots.push([x, day]);
+      if(dbl && day - 1 >= firstRow && day - 1 <= lastRow) spots.push([x + T, day - 1]);
+      for(const [xx, yy] of spots) markSvg.push(asterisk(X(xx), Y(yy), Math.max(1.6, Math.min(4, rh*0.32)) + 0.6, col));
+      if(spots.length) markItems.push(['star', col, lab]);
+    }
+  }
+
   // points (double plot: also at x + T in the row above)
   const rad = Math.max(1.6, Math.min(4, rh*0.32));
   for(const [vals, col] of [[peaks, PEAK], [troughs, TROUGH]]){
@@ -831,6 +878,7 @@ function buildSVG(S, res){
       }
     }
   }
+  out.push(...markSvg);                          // asterisks on top of the points
   if(!all.length) out.push(`<text x="${ml + plotW/2}" y="${(plotTop + plotH/2 + 5).toFixed(1)}" font-size="14" fill="#666" text-anchor="middle">Paste peak and trough times to plot them</text>`);
 
   // legend
@@ -839,10 +887,12 @@ function buildSVG(S, res){
   if(ld){ const f = ld.segs[0];
     items.push(['box', LIGHT, multi ? 'Light (L)' : `Light (L ${fmtDur(f.L)})`, 0.9]);
     items.push(['box', DARK, multi ? 'Dark (D)' : `Dark (D ${fmtDur(f.D)})`, 0.45]); }
+  items.push(...markItems);
   out.push(`<rect x="${lx-8}" y="${ly-6}" width="${mr-26}" height="${items.length*20+8}" fill="#fff" stroke="#ccc" rx="3"/>`);
   for(const [kind, col, lab, op] of items){
     ly += 14;
     out.push(kind === 'dot' ? `<circle cx="${lx+6}" cy="${ly-4}" r="4" fill="${col}"/>`
+           : kind === 'star' ? asterisk(lx+6, ly-4, 4.6, col)
                             : `<rect x="${lx}" y="${ly-10}" width="13" height="11" fill="${col}" fill-opacity="${op}" stroke="#999" stroke-width="0.5"/>`);
     out.push(`<text x="${lx+20}" y="${ly}" font-size="11.5" fill="${C.ink}">${esc(lab)}</text>`);
     ly += 6;
@@ -1205,6 +1255,7 @@ tzSel.addEventListener('change', () => {
 });
 tzOther.addEventListener('input', () => { state.tz = tzOther.value; changed(); });
 
+dtFields.push(makeDTField($('placedField'), {get:() => state.placed, set:v => { state.placed = v; changed(); }, title:'Sample placed at', clearable:true}));
 dtFields.push(makeDTField($('t0Field'), {get:() => state.t0, set:v => { state.t0 = v; changed(); }, title:'Clock time of 0 h'}));
 
 // peaks and troughs
@@ -1213,6 +1264,14 @@ $('loadExample').addEventListener('click', async () => {
   const has = state.peaks.trim() || state.troughs.trim();
   if(has && !await ask('Replace the current data with the example?', 'Peaks, troughs, the clock time of 0 h and the LD cycles are replaced; display options are kept.')) return;
   state = normalise({...state, ...exampleSettings()}); loadAll();
+});
+$('clearAll').addEventListener('click', async () => {
+  if(!await ask('⚠ Clear all data and dates?', 'Peaks and troughs, the clock time of 0 h, the sample placement and every LD start date are cleared. The first cycle is reset to LD 12:00 / 12:00 and Change 1 to LL. Display options are kept. This cannot be undone.')) return;
+  const cycles = Array.from({length:MAX_CHANGES+1}, blankCycle);
+  cycles[1].mode = 'LL';
+  Object.assign(state, {peaks:'', troughs:'', t0:'', placed:'', cycles, n_changes:1});
+  if(state.title.trim() === EXAMPLE_TITLE) state.title = '';
+  state = normalise(state); loadAll();
 });
 $('clearData').addEventListener('click', async () => {
   if(!state.peaks.trim() && !state.troughs.trim()) return;
@@ -1265,7 +1324,7 @@ X_MAJOR.forEach(t => $('xMajor').add(new Option(t, t)));
 X_MINOR.forEach(t => $('xMinor').add(new Option(t, t)));
 $('xMajor').addEventListener('change', () => { state.x_major = $('xMajor').value; changed(); });
 $('xMinor').addEventListener('change', () => { state.x_minor = $('xMinor').value; changed(); });
-for(const id of ['show_values','link_peak','link_trough','label_onsets','label_row_starts'])
+for(const id of ['show_values','link_peak','link_trough','label_onsets','label_row_starts','mark_times'])
   $(id).addEventListener('change', () => { state[id] = $(id).checked; changed(); });
 
 // rows
@@ -1298,7 +1357,7 @@ function syncControls(){                       // state -> every control (after 
   document.querySelectorAll('input[name=plot]').forEach(r => r.checked = r.value === state.plot);
   document.querySelectorAll('input[name=rowlab]').forEach(r => r.checked = r.value === state.rowlab);
   $('xMajor').value = state.x_major; $('xMinor').value = state.x_minor;
-  for(const id of ['show_values','link_peak','link_trough','label_onsets','label_row_starts','rows_auto']) $(id).checked = !!state[id];
+  for(const id of ['show_values','link_peak','link_trough','label_onsets','label_row_starts','mark_times','rows_auto']) $(id).checked = !!state[id];
   $('row_min').value = state.row_min; $('row_max').value = state.row_max;
 }
 function updateCount(k){
@@ -1318,6 +1377,8 @@ function refresh(){
   });
   $('ldErr').textContent = state.show_ld ? res.ldErrors.join('\n') : '';
   $('ldInfo').textContent = state.show_ld ? res.ldInfo : '';
+  $('placedErr').textContent = res.placedErr || '';
+  $('placedInfo').textContent = res.placedHour !== null ? `= ${g(res.placedHour)} h of the data (${res.placedLabel})` : '';
   originField.setDisabled(state.origin !== 'custom');
   $('originErr').textContent = res.originErr;
   $('originInfo').textContent = res.origin.info + (res.origin.note ? '\n' + res.origin.note : '');
