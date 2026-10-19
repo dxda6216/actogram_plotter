@@ -217,7 +217,7 @@ dialog::backdrop{background:rgba(10,15,25,.35)}
         <label class="chk" style="margin-top:8px"><input type="checkbox" id="extendBefore">Also draw the first cycle before its start time</label>
         <p class="errs" id="ldErr"></p>
         <p class="info" id="ldInfo"></p>
-        <p class="hint">LD = light/dark cycle (L, D and the period it begins with are used), LL = constant light, DD = constant darkness. Each condition starts at its date/time and lasts until the next change. For a change from LD to LL or DD, the picker lists the ends of D or L of the previous cycle.</p>
+        <p class="hint">LD = light/dark cycle (L, D and the period it begins with are used), LL = constant light, DD = constant darkness. Each condition starts at its date/time and lasts until the next change. After an LD cycle, the start picker of the next condition lists the ends of D (for LL, or an LD cycle beginning with Light) or of L (for DD, or an LD cycle beginning with Dark).</p>
       </div>
     </div>
 
@@ -1215,17 +1215,20 @@ function ask(text, sub, infoOnly){
 
 /* ---------------- suggested start times for LD -> LL / DD ---------------- */
 function startSuggestions(index){
+  // after an LD cycle: ends of D (lights-on) for LL or an LD cycle beginning with Light,
+  // ends of L (lights-off) for DD or an LD cycle beginning with Dark
   const c = state.cycles[index];
-  if(index < 1 || !['LL','DD'].includes(c.mode) || state.cycles[index-1].mode !== 'LD') return null;
-  const mode = c.mode, word = mode === 'LL' ? 'lights-on' : 'lights-off';
-  const title = mode === 'LL' ? 'Suggested: end of D (lights-on) of the previous LD cycle'
-                              : 'Suggested: end of L (lights-off) of the previous LD cycle';
+  if(index < 1 || state.cycles[index-1].mode !== 'LD') return null;
+  const mode = c.mode, lightsOn = mode === 'LL' || (mode === 'LD' && c.phase === 'Light');
+  const word = lightsOn ? 'lights-on' : 'lights-off';
+  const title = `Suggested: ${lightsOn ? 'end of D (lights-on)' : 'end of L (lights-off)'} of the previous LD cycle`
+              + (mode === 'LD' ? ` – this cycle begins with ${lightsOn ? 'Light' : 'Dark'}` : '');
   const res = compute({...state, show_ld:true, n_changes:index - 1});
   if(!res.ld || res.ld.segs.length !== index) return [title, [], 'Fix the earlier cycles (and the clock time of 0 h) first; then the suggested times are listed here.'];
   const prev = res.ld.segs[index - 1];
-  if(prev.L <= 0 || prev.D <= 0) return [title, [], `The previous LD cycle has no ${mode === 'LL' ? 'D' : 'L'} period, so there is nothing to suggest.`];
+  if(prev.L <= 0 || prev.D <= 0) return [title, [], `The previous LD cycle has no ${lightsOn ? 'D' : 'L'} period, so there is nothing to suggest.`];
   const period = prev.L + prev.D;
-  const first = mode === 'LL' ? prev.startHour + (prev.startsLight ? 0 : prev.D) : prev.startHour + (prev.startsLight ? prev.L : 0);
+  const first = lightsOn ? prev.startHour + (prev.startsLight ? 0 : prev.D) : prev.startHour + (prev.startsLight ? prev.L : 0);
   const items = [];
   for(let k = 0; k < 120; k++){
     const hour = first + k*period; if(hour <= prev.startHour) continue;
