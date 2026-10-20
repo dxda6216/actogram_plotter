@@ -225,7 +225,9 @@ dialog::backdrop{background:rgba(10,15,25,.35)}
       <h2>Actogram day 0, 0 h (left end of the top row)</h2>
       <div class="radios">
         <label class="chk"><input type="radio" name="origin" value="clock">0 h of the data (time zero)</label>
+        <label class="chk"><input type="radio" name="origin" value="zero_midnight">00:00 (midnight) on the day of 0 h of the data</label>
         <label class="chk"><input type="radio" name="origin" value="lights_on">Lights-on of the first LD cycle on its start date (LL/DD: its start)</label>
+        <label class="chk"><input type="radio" name="origin" value="first_midnight">00:00 (midnight) on the day the first LD/LL/DD cycle starts</label>
         <label class="chk"><input type="radio" name="origin" value="placed_midnight">00:00 (midnight) on the day the sample was placed</label>
         <label class="chk"><input type="radio" name="origin" value="custom">Another date/time:</label>
       </div>
@@ -573,7 +575,7 @@ function normalise(s){
   d.origin_time = String(d.origin_time||'').replace('T',' ');
   d.placed = String(d.placed||'').replace('T',' ');
   d.mark_times = d.mark_times !== false;
-  if(!['clock','lights_on','placed_midnight','custom'].includes(d.origin)) d.origin = 'lights_on';
+  if(!['clock','zero_midnight','lights_on','first_midnight','placed_midnight','custom'].includes(d.origin)) d.origin = 'lights_on';
   d.x_major = X_MAJOR[xMajorCount(d.x_major)]; d.x_minor = X_MINOR[xMinorCount(d.x_minor)];
   return d;
 }
@@ -678,6 +680,19 @@ function compute(S){
   }
 
   const kind = S.origin;
+  if(kind === 'zero_midnight' && hasClock){
+    const mid = midnightOf(res.zero, res.tz, 0), h = hours(mid);
+    res.origin = {hour:h, x:'0 = 00:00', y:'', info:`Day 0, 0 h = 00:00 on the day of 0 h of the data: ${fmtLocal(mid, res.tz)} (= ${g(h)} h of the data)`};
+    return res;
+  }
+  if(kind === 'first_midnight' && hasClock){
+    const f = localToUtc(S.cycles[0].start, res.tz, 'First cycle start');
+    if(f.ms !== undefined){
+      const mid = midnightOf(f.ms, res.tz, 0), h = hours(mid);
+      res.origin = {hour:h, x:'0 = 00:00', y:'', info:`Day 0, 0 h = 00:00 on the day the first LD/LL/DD cycle starts: ${fmtLocal(mid, res.tz)} (= ${g(h)} h of the data)`};
+      return res;
+    }
+  }
   if(kind === 'placed_midnight' && res.placedHour !== null){
     const mid = midnightOf(res.placedMs, res.tz, 0), h = hours(mid);
     res.origin = {hour:h, x:'0 = 00:00', y:'', info:`Day 0, 0 h = 00:00 on the day the sample was placed: ${fmtLocal(mid, res.tz)} (= ${g(h)} h of the data)`};
@@ -702,6 +717,7 @@ function compute(S){
   res.origin = hasClock
     ? {hour:0, x:`0 = ${wallText(res.zero, res.tz).slice(11,16)}`, y:'', info:`Day 0, 0 h = ${fmtLocal(res.zero, res.tz)} (= 0 h of the data)`}
     : {hour:0, x:'', y:'', info:'Day 0, 0 h = 0 h of the data'};
+  if(kind === 'first_midnight') res.origin.note = 'The first LD/LL/DD cycle has no valid start date/time, so 0 h of the data is used.';
   if(kind === 'placed_midnight') res.origin.note = 'The sample placement time is not set (or not valid), so 0 h of the data is used.';
   if(kind === 'lights_on') res.origin.note = S.show_ld ? 'The LD cycles are not valid yet, so 0 h of the data is used.'
                                                      : 'The LD cycles are not shown, so 0 h of the data is used.';
