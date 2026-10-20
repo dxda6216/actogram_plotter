@@ -1,11 +1,10 @@
 # Actogram Plotter
-**Actogram-like visualization of periodic activities - tracking peaks and troughs of a circadin rhythm**
 
 **▶ Open the app: https://dxda6216.github.io/actogram_plotter/**
 
 Actogram Plotter draws a double‑plotted (or single‑plotted) actogram from peak and trough times of a rhythm, together with the light/dark conditions of the experiment. It does no rhythm analysis: you enter the times, it draws the figure.
 
-The app runs entirely in your web browser from the link above. There is nothing to install and no account is needed. Everything you enter stays in your browser: no data is uploaded or sent anywhere, and the only  external request is to import web fonts from Google.
+The app runs entirely in your web browser from the link above. There is nothing to install and no account is needed.
 
 ## Quick start
 
@@ -30,7 +29,7 @@ All dates and times are entered with a picker: click a day in the calendar and c
 
 Paste the peak times and the trough times into the two lists, one value per line, as hours after 0 h (for example `12.76`, `36.71`, `60.52`). A column copied from a spreadsheet works as it is; commas, tabs and spaces also separate values, and negative values plot before 0 h. Under each list the app shows how many values it read and points out anything that is not a number.
 
-**Load example** loads the example data set and **Clear data** empties both lists after asking for confirmation.
+**Load example** loads the example data set, and **Clear data** empties both lists. **Clear all** also blanks the clock time of 0 h, the sample placement and every LD start date, and resets the cycles to LD 12:00 / 12:00 followed by LL, ready for a new experiment. Each of these asks for confirmation first.
 
 ### Light/dark (LD) cycles
 
@@ -41,7 +40,7 @@ Describe the lighting with a first cycle and up to five changes. Each one has:
 - **Starts at**: the local date and time at which the condition begins.
 - **Begins with**: whether an LD cycle starts with its light or its dark period.
 
-Each condition lasts until the next change starts. When a change from LD to LL or DD is picked, the picker also lists the times at which D (lights‑on) or L (lights‑off) of the previous LD cycle ends. **Also draw the first cycle before its start time** extends the first condition backwards. Light periods are drawn pale yellow and dark periods grey.
+Each condition lasts until the next change starts. When the condition before a change is LD, the start picker of that change also lists the times at which the previous LD cycle’s D ends (lights‑on) — for a change to LL or to an LD cycle beginning with Light — or its L ends (lights‑off) — for a change to DD or to an LD cycle beginning with Dark. **Also draw the first cycle before its start time** extends the first condition backwards. Light periods are drawn pale yellow and dark periods grey.
 
 ### Actogram day 0, 0 h
 
@@ -80,13 +79,13 @@ The page also remembers its display options in the browser between visits. Each 
 
 ## Example data
 
-The example covers about 18 days, with 0 h = Monday 5 October 2026, 08:00 CDT (lights‑on):
+In the example, the samples are put into the light/dark conditions on Sunday 4 October 2026 at 13:27 (orange asterisk), and 0 h of the data is Monday 5 October 2026 at 10:15 CDT (green asterisk):
 
-| Hours | Condition | Behaviour of the rhythm |
+| From (local time) | Condition | Behaviour of the rhythm |
 |---|---|---|
-| 0–120 | 5 days of LD 12:12 (lights on 08:00) | Entrained; peaks about 12.5 h after lights‑on. |
-| 120–270 | 5 cycles of LD 15:15 (T = 30 h) | Pulled to the longer cycle within a few cycles. |
-| 270–438 | 168 h of LL, from the end of the last dark period | Free‑running with a period of about 24.8 h. |
+| 4 Oct 08:00 | LD 12:12 (lights on 08:00) | Entrained to the 24-h cycle. |
+| 10 Oct 08:00 (117.75 h) | LD 15:15 (T = 30 h) | Pulled to the longer cycle within a few cycles. |
+| 16 Oct 14:00 (267.75 h), the end of the last dark period | LL | Free‑running with a period of about 24.8 h. |
 
 Set **Period T** to 30:00 to see the LD 15:15 part line up.
 
