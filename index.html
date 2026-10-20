@@ -116,6 +116,21 @@ button.primary{background:var(--ink);color:var(--surface);border-color:var(--ink
 .bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
 #status{color:var(--muted);font-size:.86rem}
 .sr{position:absolute;left:-9999px}
+/* green tint = values that must match the experiment records; blue tint = view settings */
+:root{--rec:#2E6B3F;--rec-bg:#EEF7EF;--rec-bar:#8CC79A;--disp:#2F64A8;--disp-bg:#EEF4FB;--disp-bar:#9DBDE6}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){--rec:#9BD3A8;--rec-bg:#1D2E23;--rec-bar:#4E8A5E;--disp:#9CC2EE;--disp-bg:#1E2936;--disp-bar:#4D78AA} }
+:root[data-theme="dark"]{--rec:#9BD3A8;--rec-bg:#1D2E23;--rec-bar:#4E8A5E;--disp:#9CC2EE;--disp-bg:#1E2936;--disp-bar:#4D78AA}
+.rec,.disp{position:relative;border:0;border-left:4px solid;border-radius:8px;padding:26px 12px 10px;margin-top:10px}
+.rec{background:var(--rec-bg);border-left-color:var(--rec-bar)}
+.disp{background:var(--disp-bg);border-left-color:var(--disp-bar)}
+.rec::before,.disp::before{content:attr(data-tag);position:absolute;top:7px;left:12px;font-size:.7rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;line-height:1.2}
+.rec::before{color:var(--rec)} .disp::before{color:var(--disp)}
+.guide{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:10px 28px;align-items:flex-start;background:var(--surface);
+  border:1px solid var(--line);border-radius:10px;padding:12px 16px}
+.guide div{display:flex;gap:10px;align-items:flex-start;flex:1 1 380px}
+.guide .sw{flex:none;width:28px;height:20px;border-radius:4px;border-left:4px solid;margin-top:1px}
+.guide .sw.r{background:var(--rec-bg);border-left-color:var(--rec-bar)} .guide .sw.b{background:var(--disp-bg);border-left-color:var(--disp-bar)}
+.guide b.r{color:var(--rec)} .guide b.b{color:var(--disp)}
 /* dialogs */
 dialog{border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);padding:0;
   box-shadow:0 12px 40px rgba(0,0,0,.25);max-width:min(96vw,440px)}
@@ -158,10 +173,14 @@ dialog::backdrop{background:rgba(10,15,25,.35)}
 </header>
 
 <main>
+  <div class="guide" role="note" aria-label="How to read the frames">
+    <div><span class="sw r" aria-hidden="true"></span><p style="margin:0"><b class="r">Green areas – from your records.</b> Enter these from your lab notebook and experiment records: the clock time of 0 h and its time zone, the peak and trough times, the sample placement and the light/dark schedule. A wrong value puts the data at the wrong time.</p></div>
+    <div><span class="sw b" aria-hidden="true"></span><p style="margin:0"><b class="b">Blue areas – view settings.</b> Change these freely: day 0, the period T, the rows, ticks, labels and other plot options only change how the actogram looks, never the data.</p></div>
+  </div>
   <section class="panel" aria-label="Data and conditions">
     <div class="block">
       <h2>Clock time of the data</h2>
-      <div class="clock">
+      <div class="clock rec" data-tag="From your records · enter exactly">
         <span>0 h =</span><div id="t0Field"></div>
         <label for="tzSelect">Time zone</label>
         <div>
@@ -176,7 +195,7 @@ dialog::backdrop{background:rgba(10,15,25,.35)}
 
     <div class="block">
       <h2>Peaks and troughs (hours after 0 h)</h2>
-      <div class="series">
+      <div class="series rec" data-tag="From your records · enter exactly">
         <label><span class="p">● Peaks (h)</span>
           <textarea id="peaks" class="mono" spellcheck="false"></textarea>
           <span class="count" id="peaksCount"></span>
@@ -197,7 +216,7 @@ dialog::backdrop{background:rgba(10,15,25,.35)}
 
     <div class="block">
       <h2>Sample placement</h2>
-      <div class="clock"><span>Placed at</span><div id="placedField"></div></div>
+      <div class="clock rec" data-tag="From your records · enter exactly"><span>Placed at</span><div id="placedField"></div></div>
       <p class="hint">Date and time when the samples were put into the light/dark conditions (LL, DD or LD). It is marked with an orange asterisk in the actogram (0 h of the data: green asterisk). Leave it empty if not needed.</p>
       <p class="errs" id="placedErr"></p>
       <p class="info" id="placedInfo"></p>
@@ -207,12 +226,14 @@ dialog::backdrop{background:rgba(10,15,25,.35)}
       <h2>Light/dark (LD) cycles</h2>
       <label class="chk"><input type="checkbox" id="showLD">Show the LD cycles in the actogram</label>
       <div class="ld-body" id="ldBody">
-        <div class="ld-wrap" style="margin-top:8px"><div class="ld-table" id="ldTable">
+        <div class="rec" data-tag="From your records · enter exactly">
+        <div class="ld-wrap"><div class="ld-table" id="ldTable">
           <span class="h"></span><span class="h">Condition</span><span class="h">L (hh:mm)</span><span class="h">D (hh:mm)</span><span class="h">Starts at (click 📅 to pick)</span><span class="h">Begins with</span>
         </div></div>
         <div class="row" style="margin-top:8px">
           <label for="nChanges">Number of changes</label>
           <select id="nChanges"></select><span class="hint" style="margin:0">(0–5)</span>
+        </div>
         </div>
         <label class="chk" style="margin-top:8px"><input type="checkbox" id="extendBefore">Also draw the first cycle before its start time</label>
         <p class="errs" id="ldErr"></p>
@@ -223,6 +244,7 @@ dialog::backdrop{background:rgba(10,15,25,.35)}
 
     <div class="block">
       <h2>Actogram day 0, 0 h (left end of the top row)</h2>
+      <div class="disp" data-tag="View settings · change freely">
       <div class="radios">
         <label class="chk"><input type="radio" name="origin" value="clock">0 h of the data (time zero)</label>
         <label class="chk"><input type="radio" name="origin" value="zero_midnight">00:00 (midnight) on the day of 0 h of the data</label>
@@ -232,15 +254,16 @@ dialog::backdrop{background:rgba(10,15,25,.35)}
         <label class="chk"><input type="radio" name="origin" value="custom">Another date/time:</label>
       </div>
       <div id="originField" style="margin:6px 0 0 22px"></div>
+      </div>
       <p class="errs" id="originErr"></p>
       <p class="info" id="originInfo"></p>
     </div>
 
     <div class="block">
       <h2>Plot</h2>
-      <div class="pgrid">
+      <div class="pgrid disp" data-tag="View settings · change freely">
         <label for="title">Title</label><input type="text" id="title">
-        <span class="k">Period T (hh:mm)</span><span class="row"><span class="tf"><input type="text" id="period" class="mono" inputmode="numeric"></span><span class="errs" id="periodErr" style="margin:0"></span></span>
+        <span class="k">Period T (hh:mm)</span><span class="row"><span class="tf"><input type="text" id="period" class="mono" inputmode="numeric"></span><button type="button" id="periodReset" title="Set period T back to 24:00">↺ 24:00</button><span class="errs" id="periodErr" style="margin:0"></span></span>
         <span class="k">Plot</span>
         <div class="seg" role="radiogroup" aria-label="Plot"><label><input type="radio" name="plot" value="double">Double</label><label><input type="radio" name="plot" value="single">Single</label></div>
         <span class="k">Row labels</span>
@@ -265,6 +288,7 @@ dialog::backdrop{background:rgba(10,15,25,.35)}
     <div class="paper-wrap"><div id="chartHost"></div></div>
     <div class="tune">
       <h3>Fine-tune the plot (1-minute steps)</h3>
+      <div class="rec" data-tag="From your records · enter exactly" title="Moves the recorded 0 h: use it only to correct the clock time of 0 h">
       <div class="adj" data-key="t0">
         <div class="adj-label">0 h of the data<span class="adj-val"></span></div>
         <div class="adj-ctrl">
@@ -273,6 +297,8 @@ dialog::backdrop{background:rgba(10,15,25,.35)}
           <button type="button" data-d="1">+1 min</button><button type="button" data-d="10">+10 min</button><button type="button" data-d="60">+1 h</button>
         </div>
       </div>
+      </div>
+      <div class="disp" data-tag="View settings · change freely">
       <div class="adj" data-key="origin">
         <div class="adj-label">Actogram day 0, 0 h<span class="adj-val"></span></div>
         <div class="adj-ctrl">
@@ -298,7 +324,8 @@ dialog::backdrop{background:rgba(10,15,25,.35)}
           <span id="rowsNote"></span>
         </div>
       </div>
-      <p class="hint">Hold a button to repeat. With a slider focused, each arrow key press moves it by 1 minute; the 0 h and day 0, 0 h sliders move up to ±12 h from where you start. Shifting day 0, 0 h here switches it to “Another date/time”. Rows: untick Automatic to set the first (Min) and last (Max) row in whole cycles; negative values are allowed.</p>
+      </div>
+      <p class="hint"><b style="color:var(--rec)">0 h of the data</b> (green) moves the recorded clock time of 0 h: use it only to correct that entry. The controls in the blue area change the view only. Hold a button to repeat. With a slider focused, each arrow key press moves it by 1 minute; the 0 h and day 0, 0 h sliders move up to ±12 h from where you start. Shifting day 0, 0 h here switches it to “Another date/time”. Rows: untick Automatic to set the first (Min) and last (Max) row in whole cycles; negative values are allowed.</p>
     </div>
     <div class="bar">
       <span id="saveFig" hidden><button type="button" id="savePng">Save as PNG</button> <button type="button" id="saveSvg">Save as SVG</button></span>
@@ -1338,6 +1365,10 @@ const originField = makeDTField($('originField'), {get:() => state.origin_time, 
 $('title').addEventListener('input', () => { state.title = $('title').value; changed(); });
 const periodTF = new TimeField($('period'), {hours:PERIOD_MAX/60 + 1, minHour:0, maxMin:PERIOD_MAX, minMin:PERIOD_MIN, def:[24,0],
   onChange:v => { state.period = v; changed(); }});
+$('periodReset').addEventListener('click', () => {           // one click back to T = 24:00
+  state.period = DEFAULT_PERIOD; $('period').value = DEFAULT_PERIOD;
+  $('period').setAttribute('aria-invalid', 'false'); periodTF.sync(); changed();
+});
 for(const nm of ['plot','rowlab']) document.querySelectorAll(`input[name=${nm}]`).forEach(r => r.addEventListener('change', () => { state[nm] = r.value; changed(); }));
 X_MAJOR.forEach(t => $('xMajor').add(new Option(t, t)));
 X_MINOR.forEach(t => $('xMinor').add(new Option(t, t)));
