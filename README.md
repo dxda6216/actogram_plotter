@@ -21,6 +21,6 @@ To use the app without an internet connection, download `index.html` from this r
 
 **▶ https://github.com/dxda6216/actogram_plotter/blob/main/actogram_plotter_web_app_manual.pdf**
 
-## Privacy
+## Privacy and data confidentiality
 
 The page is delivered by GitHub Pages, but everything you enter stays in your browser: no data is uploaded or sent anywhere, and the only external request is to import web fonts from Google. What the page remembers between visits is stored only in your own browser, so it is not shared with other people or other computers; use **Save settings** to move your work.
