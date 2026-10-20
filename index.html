@@ -100,6 +100,10 @@ button.primary{background:var(--ink);color:var(--surface);border-color:var(--ink
 .seg label:has(input:checked){background:var(--ink);color:var(--surface)}
 .seg label:has(input:focus-visible){outline:2px solid var(--focus);outline-offset:-2px}
 .opts{display:flex;flex-direction:column;gap:5px}
+.swatches{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.swatches button{width:24px;height:22px;padding:0;border:1px solid #9AA3AD;border-radius:4px;cursor:pointer}
+.swatches button[aria-checked=true]{outline:2.5px solid var(--ink);outline-offset:1px}
+.swatches span{margin-left:8px;font-size:.85rem;color:var(--muted)}
 /* chart */
 .paper-wrap{overflow:auto;border:1px solid var(--line);border-radius:8px;background:#fff;max-height:78vh}
 #chart{display:block;width:100%;min-width:720px;height:auto}
@@ -270,6 +274,8 @@ dialog::backdrop{background:rgba(10,15,25,.35)}
         <div class="seg" role="radiogroup" aria-label="Row labels"><label><input type="radio" name="rowlab" value="number">Number</label><label><input type="radio" name="rowlab" value="date">Date</label></div>
         <label for="xMajor">X major ticks</label><select id="xMajor"></select>
         <label for="xMinor">X minor ticks</label><select id="xMinor"></select>
+        <span class="k">Light colour</span><div class="swatches" id="lightSw" role="radiogroup" aria-label="Colour of the light periods"></div>
+        <span class="k">Dark colour</span><div class="swatches" id="darkSw" role="radiogroup" aria-label="Colour of the dark periods"></div>
         <span class="k">Options</span>
         <div class="opts">
           <div class="row"><label class="chk"><input type="checkbox" id="show_values">Show times</label>
@@ -374,7 +380,11 @@ const KEY = 'actogram-plotter-v4';
 const H = 3600000, MAX_CHANGES = 5, LD_MAX_MIN = 99*60 + 59;
 const PERIOD_MIN = 1, PERIOD_MAX = 240*60, MAX_ROWS = 1000;
 const DEFAULT_TZ = 'America/Chicago', DEFAULT_PERIOD = '24:00', EXAMPLE_TITLE = 'Example Data';
-const LIGHT = '#fff3b0', DARK = '#8c8c8c', PEAK = '#d32f2f', TROUGH = '#1f4fd1';
+const PEAK = '#d32f2f', TROUGH = '#1f4fd1';
+// colours of the light and dark bands (12 each; the first is the default)
+const LIGHT_COLORS = [['Pale yellow','#fff8d6'], ['Lemon','#fff9c4'], ['Cream','#fffbf0'], ['Amber','#ffecb3'], ['Peach','#ffe8d2'], ['Apricot','#ffe0b2'], ['White','#ffffff'], ['Pale green','#eaf4df'], ['Mint','#dff1e0'], ['Sky','#e6f2fb'], ['Pale pink','#fbe6e8'], ['Lavender','#f0ecf8']];
+const DARK_COLORS = [['Light grey','#dadada'], ['Grey','#c4c4c4'], ['Mid grey','#adadad'], ['Dark grey','#969696'], ['Graphite','#808080'], ['Slate','#c3c9d2'], ['Blue grey','#aebbcc'], ['Steel','#9dadc7'], ['Indigo','#a9abcf'], ['Purple grey','#bfb5cc'], ['Taupe','#c4bbb1'], ['Teal grey','#9dbab8']];
+const pickColor = (v, pal) => { const t = String(v||'').trim().toLowerCase(); const hit = pal.find(([n, c]) => t === c || t === n.toLowerCase()); return hit ? hit[1] : pal[0][1]; };
 const PLACED = '#f57c00', ZERO = '#2e7d32';   // asterisks - orange: samples placed; green: 0 h of the data
 const asterisk = (cx, cy, r, col) => [90, 30, 150].map(a => { const dx = r*Math.cos(a*Math.PI/180), dy = r*Math.sin(a*Math.PI/180);
   return `<line x1="${(cx-dx).toFixed(2)}" y1="${(cy-dy).toFixed(2)}" x2="${(cx+dx).toFixed(2)}" y2="${(cy+dy).toFixed(2)}" stroke="${col}" stroke-width="1.8" stroke-linecap="round"/>`; }).join('');
@@ -570,7 +580,7 @@ function exampleSettings(){
 }
 function defaultSettings(){
   return {...exampleSettings(), plot:'double', rowlab:'number', show_values:false, link_peak:false, link_trough:false,
-          row_min:0, row_max:5, label_onsets:false, label_row_starts:false, mark_times:true, x_major:X_MAJOR[3], x_minor:X_MINOR[0]};
+          row_min:0, row_max:5, label_onsets:false, label_row_starts:false, mark_times:true, x_major:X_MAJOR[3], x_minor:X_MINOR[0], light_color:LIGHT_COLORS[0][1], dark_color:DARK_COLORS[0][1]};
 }
 function normalise(s){
   const d = Object.assign(defaultSettings(), s || {});
@@ -594,6 +604,7 @@ function normalise(s){
   d.mark_times = d.mark_times !== false;
   if(!['clock','zero_midnight','lights_on','first_midnight','placed_midnight','custom'].includes(d.origin)) d.origin = 'lights_on';
   d.x_major = X_MAJOR[xMajorCount(d.x_major)]; d.x_minor = X_MINOR[xMinorCount(d.x_minor)];
+  d.light_color = pickColor(d.light_color, LIGHT_COLORS); d.dark_color = pickColor(d.dark_color, DARK_COLORS);
   return d;
 }
 let state;
@@ -778,6 +789,7 @@ const C = {ink:'#222', axis:'#444', grid:'#C9C9C9', frame:'#555'};
 const FONT = '"Helvetica Neue",Helvetica,Arial,sans-serif';
 function buildSVG(S, res){
   const T = res.period, dbl = S.plot === 'double', span = dbl ? 2*T : T, o = res.origin.hour;
+  const LIGHT = pickColor(S.light_color, LIGHT_COLORS), DARK = pickColor(S.dark_color, DARK_COLORS);
   const peaks = parseList(S.peaks).vals, troughs = parseList(S.troughs).vals, all = peaks.concat(troughs);
   const rr = rowRange(S, res), firstRow = rr.lo, lastRow = rr.hi, nRows = lastRow - firstRow + 1;
   const ld = S.show_ld ? res.ld : null;
@@ -815,7 +827,7 @@ function buildSVG(S, res){
         const lo = o + (r + half)*T;
         for(const [a, b, light] of ldIntervals(ld, lo, lo + T)){
           const x0 = a - o - r*T;
-          out.push(`<rect x="${X(x0).toFixed(2)}" y="${Y(r - 0.4).toFixed(2)}" width="${((b - a)/span*plotW).toFixed(2)}" height="${(0.8*rh).toFixed(2)}" fill="${light?LIGHT:DARK}" fill-opacity="${light?0.9:0.45}"/>`);
+          out.push(`<rect x="${X(x0).toFixed(2)}" y="${Y(r - 0.4).toFixed(2)}" width="${((b - a)/span*plotW).toFixed(2)}" height="${(0.8*rh).toFixed(2)}" fill="${light?LIGHT:DARK}"${light && LIGHT === '#ffffff' ? ' stroke="#d0d0d0" stroke-width="0.6"' : ''}/>`);
         }
       }
     }
@@ -918,8 +930,8 @@ function buildSVG(S, res){
   const lx = ml + plotW + 18; let ly = plotTop + 6;
   const items = [['dot', PEAK, 'Peaks'], ['dot', TROUGH, 'Troughs']];
   if(ld){ const f = ld.segs[0];
-    items.push(['box', LIGHT, multi ? 'Light (L)' : `Light (L ${fmtDur(f.L)})`, 0.9]);
-    items.push(['box', DARK, multi ? 'Dark (D)' : `Dark (D ${fmtDur(f.D)})`, 0.45]); }
+    items.push(['box', LIGHT, multi ? 'Light (L)' : `Light (L ${fmtDur(f.L)})`, 1]);
+    items.push(['box', DARK, multi ? 'Dark (D)' : `Dark (D ${fmtDur(f.D)})`, 1]); }
   items.push(...markItems);
   out.push(`<rect x="${lx-8}" y="${ly-6}" width="${mr-26}" height="${items.length*20+8}" fill="#fff" stroke="#ccc" rx="3"/>`);
   for(const [kind, col, lab, op] of items){
@@ -1362,6 +1374,24 @@ $('periodReset').addEventListener('click', () => {           // one click back t
 for(const nm of ['plot','rowlab']) document.querySelectorAll(`input[name=${nm}]`).forEach(r => r.addEventListener('change', () => { state[nm] = r.value; changed(); }));
 X_MAJOR.forEach(t => $('xMajor').add(new Option(t, t)));
 X_MINOR.forEach(t => $('xMinor').add(new Option(t, t)));
+// colour swatches for the light and dark bands
+for(const [hostId, key, pal] of [['lightSw', 'light_color', LIGHT_COLORS], ['darkSw', 'dark_color', DARK_COLORS]]){
+  const host = $(hostId);
+  pal.forEach(([name, c]) => {
+    const btn = document.createElement('button'); btn.type = 'button'; btn.style.background = c;
+    btn.title = name; btn.setAttribute('role', 'radio'); btn.setAttribute('aria-label', name); btn.dataset.c = c;
+    btn.addEventListener('click', () => { state[key] = c; changed(true); });
+    host.append(btn);
+  });
+  host.append(document.createElement('span'));
+}
+function syncSwatches(){
+  for(const [hostId, key, pal] of [['lightSw', 'light_color', LIGHT_COLORS], ['darkSw', 'dark_color', DARK_COLORS]]){
+    const cur = pickColor(state[key], pal);
+    $(hostId).querySelectorAll('button').forEach(b => b.setAttribute('aria-checked', b.dataset.c === cur ? 'true' : 'false'));
+    $(hostId).querySelector('span').textContent = pal.find(([, c]) => c === cur)[0];
+  }
+}
 $('xMajor').addEventListener('change', () => { state.x_major = $('xMajor').value; changed(); });
 $('xMinor').addEventListener('change', () => { state.x_minor = $('xMinor').value; changed(); });
 for(const id of ['show_values','link_peak','link_trough','label_onsets','label_row_starts','mark_times'])
@@ -1397,6 +1427,7 @@ function syncControls(){                       // state -> every control (after 
   document.querySelectorAll('input[name=plot]').forEach(r => r.checked = r.value === state.plot);
   document.querySelectorAll('input[name=rowlab]').forEach(r => r.checked = r.value === state.rowlab);
   $('xMajor').value = state.x_major; $('xMinor').value = state.x_minor;
+  syncSwatches();
   for(const id of ['show_values','link_peak','link_trough','label_onsets','label_row_starts','mark_times','rows_auto']) $(id).checked = !!state[id];
   $('row_min').value = state.row_min; $('row_max').value = state.row_max;
 }
