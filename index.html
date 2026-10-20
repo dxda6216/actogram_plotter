@@ -288,16 +288,6 @@ dialog::backdrop{background:rgba(10,15,25,.35)}
     <div class="paper-wrap"><div id="chartHost"></div></div>
     <div class="tune">
       <h3>Fine-tune the plot (1-minute steps)</h3>
-      <div class="rec" data-tag="From your records · enter exactly" title="Moves the recorded 0 h: use it only to correct the clock time of 0 h">
-      <div class="adj" data-key="t0">
-        <div class="adj-label">0 h of the data<span class="adj-val"></span></div>
-        <div class="adj-ctrl">
-          <button type="button" data-d="-60">−1 h</button><button type="button" data-d="-10">−10 min</button><button type="button" data-d="-1">−1 min</button>
-          <input type="range" min="-720" max="720" step="1" value="0" aria-label="Shift 0 h of the data, in minutes">
-          <button type="button" data-d="1">+1 min</button><button type="button" data-d="10">+10 min</button><button type="button" data-d="60">+1 h</button>
-        </div>
-      </div>
-      </div>
       <div class="disp" data-tag="View settings · change freely">
       <div class="adj" data-key="origin">
         <div class="adj-label">Actogram day 0, 0 h<span class="adj-val"></span></div>
@@ -325,7 +315,7 @@ dialog::backdrop{background:rgba(10,15,25,.35)}
         </div>
       </div>
       </div>
-      <p class="hint"><b style="color:var(--rec)">0 h of the data</b> (green) moves the recorded clock time of 0 h: use it only to correct that entry. The controls in the blue area change the view only. Hold a button to repeat. With a slider focused, each arrow key press moves it by 1 minute; the 0 h and day 0, 0 h sliders move up to ±12 h from where you start. Shifting day 0, 0 h here switches it to “Another date/time”. Rows: untick Automatic to set the first (Min) and last (Max) row in whole cycles; negative values are allowed.</p>
+      <p class="hint">These controls change the view only; 0 h of the data is set in the left column. Hold a button to repeat. With a slider focused, each arrow key press moves it by 1 minute; the day 0, 0 h slider moves up to ±12 h from where you start. Shifting day 0, 0 h here switches it to “Another date/time”. Rows: untick Automatic to set the first (Min) and last (Max) row in whole cycles; negative values are allowed.</p>
     </div>
     <div class="bar">
       <span id="saveFig" hidden><button type="button" id="savePng">Save as PNG</button> <button type="button" id="saveSvg">Save as SVG</button></span>
