@@ -226,8 +226,8 @@ dialog::backdrop{background:rgba(10,15,25,.35)}
       <div class="radios">
         <label class="chk"><input type="radio" name="origin" value="clock">0 h of the data (time zero)</label>
         <label class="chk"><input type="radio" name="origin" value="zero_midnight">00:00 (midnight) on the day of 0 h of the data</label>
-        <label class="chk"><input type="radio" name="origin" value="lights_on">Lights-on of the first LD cycle on its start date (LL/DD: its start)</label>
-        <label class="chk"><input type="radio" name="origin" value="first_midnight">00:00 (midnight) on the day the first LD/LL/DD cycle starts</label>
+        <label class="chk"><input type="radio" name="origin" value="lights_on">Light-on of the first LD cycle on its start date (LL/DD: its start)</label>
+        <label class="chk"><input type="radio" name="origin" value="first_midnight">00:00 (midnight) on the day the first LD/LL/DD started</label>
         <label class="chk"><input type="radio" name="origin" value="placed_midnight">00:00 (midnight) on the day the sample was placed</label>
         <label class="chk"><input type="radio" name="origin" value="custom">Another date/time:</label>
       </div>
@@ -689,7 +689,7 @@ function compute(S){
     const f = localToUtc(S.cycles[0].start, res.tz, 'First cycle start');
     if(f.ms !== undefined){
       const mid = midnightOf(f.ms, res.tz, 0), h = hours(mid);
-      res.origin = {hour:h, x:'0 = 00:00', y:'', info:`Day 0, 0 h = 00:00 on the day the first LD/LL/DD cycle starts: ${fmtLocal(mid, res.tz)} (= ${g(h)} h of the data)`};
+      res.origin = {hour:h, x:'0 = 00:00', y:'', info:`Day 0, 0 h = 00:00 on the day the first LD/LL/DD started: ${fmtLocal(mid, res.tz)} (= ${g(h)} h of the data)`};
       return res;
     }
   }
