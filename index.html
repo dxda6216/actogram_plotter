@@ -136,7 +136,11 @@ button.primary{background:var(--ink);color:var(--surface);border-color:var(--ink
 #rowsNote{color:var(--bad);font-size:.85rem}
 .bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
 .ana{margin-top:14px;border:1px solid var(--line);border-radius:8px;padding:12px 14px;background:var(--surface)}
-.ana-ctl{background:var(--disp-bg);border-left:4px solid var(--disp-bar);border-radius:8px;padding:10px 12px}
+:root{--ana-bg:#F6F4EE;--ana-bar:#D5CBB6}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){--ana-bg:#29271F;--ana-bar:#6F6552} }
+:root[data-theme="dark"]{--ana-bg:#29271F;--ana-bar:#6F6552}
+/* analysis tools: neither a record (green) nor a view setting (blue), so a neutral sand tint */
+.ana-ctl{background:var(--ana-bg);border-left:4px solid var(--ana-bar);border-radius:8px;padding:10px 12px}
 .rcard{display:grid;grid-template-columns:140px minmax(0,1fr);gap:8px 18px;padding:14px 0;border-bottom:1px solid var(--line)}
 .rcard:last-child{border-bottom:0}
 .rcard h4{margin:0;font-family:ui-monospace,Consolas,Menlo,monospace;font-size:.98rem}
