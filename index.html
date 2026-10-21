@@ -135,7 +135,25 @@ button.primary{background:var(--ink);color:var(--surface);border-color:var(--ink
 .adj-rows .chk{margin-right:6px}
 #rowsNote{color:var(--bad);font-size:.85rem}
 .bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
-.ana{margin-top:14px;border:1px solid var(--line);border-radius:8px;padding:12px 14px;background:var(--disp-bg);border-left:4px solid var(--disp-bar)}
+.ana{margin-top:14px;border:1px solid var(--line);border-radius:8px;padding:12px 14px;background:var(--surface)}
+.ana-ctl{background:var(--disp-bg);border-left:4px solid var(--disp-bar);border-radius:8px;padding:10px 12px}
+.rcard{display:grid;grid-template-columns:140px minmax(0,1fr);gap:8px 18px;padding:14px 0;border-bottom:1px solid var(--line)}
+.rcard:last-child{border-bottom:0}
+.rcard h4{margin:0;font-family:ui-monospace,Consolas,Menlo,monospace;font-size:.98rem}
+.rcard .sub{color:var(--muted);font-size:.82rem;margin:3px 0 6px}
+.rcard .big{display:flex;flex-wrap:wrap;gap:4px 40px;margin:4px 0 6px}
+.rcard .big b{display:block;font-size:1.65rem;line-height:1.15}
+.rcard .big span{font-size:.8rem;color:var(--muted)}
+.rcard .pk{color:var(--peak)} .rcard .tr{color:var(--trough)}
+.rcard table{border-collapse:collapse;font-size:.82rem;font-variant-numeric:tabular-nums;width:100%}
+.rcard th{font-weight:700;color:var(--muted);text-align:right;padding:4px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+.rcard td{text-align:right;padding:4px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+.rcard th:first-child,.rcard td:first-child{text-align:left}
+.rcard details{margin-top:6px;font-size:.84rem}
+.rcard summary{color:var(--info);cursor:pointer}
+.rcard .none{color:var(--muted);font-size:.85rem}
+.fn{color:var(--muted);font-size:.78rem;margin:5px 0 0}
+@media (max-width:700px){ .rcard{grid-template-columns:1fr} }
 .ana h3{font-size:.98rem;margin:0 0 8px}
 .ana-bar{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center}
 .ana-bar .k{color:var(--muted);font-size:.88rem}
@@ -344,6 +362,7 @@ dialog::backdrop{background:rgba(10,15,25,.35)}
     <div class="paper-wrap"><div id="chartHost"></div></div>
     <div class="ana" id="anaPanel">
       <h3>Phase analysis</h3>
+      <div class="ana-ctl">
       <div class="ana-bar">
         <span class="k">Drag to</span>
         <div class="seg" role="radiogroup" aria-label="Drag to"><label><input type="radio" name="drag_mode" value="select">Select</label><label><input type="radio" name="drag_mode" value="deselect">Deselect</label></div>
@@ -364,8 +383,13 @@ dialog::backdrop{background:rgba(10,15,25,.35)}
         <label class="chk"><input type="checkbox" id="draw_fit">Draw fitted lines (LD: mean phase, dotted black; LL/DD: regression)</label>
       </div>
       <p class="hint"><b>LD:</b> phase = ZT ÷ (L + D) × 360°, with ZT0 at light-on (circular mean of the selected points). <b>LL/DD:</b> the event time t (h after the 0° reference) is fitted as t = b + τ·n, where n is the cycle number (cycle 0 begins at the reference); the slope τ is the free-running period and the phase is (b mod τ) ÷ τ × 360°.</p>
+      </div>
+      <h3 style="margin-top:14px">Phase results</h3>
       <p class="info" id="anaNote"></p>
+      <div id="anaCards"></div>
+      <h3 style="margin-top:14px;font-size:.92rem">Summary table</h3>
       <div class="ana-wrap"><table class="ana-table" id="anaTable"></table></div>
+      <p class="fn"><b>Phase (h)</b> is the phase in hours within one cycle: for LD the mean ZT (hours after light-on), for LL/DD b mod τ (hours from the 0° reference to the fitted event). <b>Phase (°)</b> is the same as a fraction of the cycle: Phase (h) ÷ cycle length × 360°.</p>
       <details style="margin-top:8px"><summary>Selected points</summary><div class="ana-wrap"><table class="ana-table" id="anaEvents"></table></div></details>
       <div class="bar">
         <button type="button" id="dlCsv" hidden>Download results (CSV)</button>
@@ -879,7 +903,7 @@ function analyze(S, res){
         const P = s.L + s.D, on = s.startsLight ? s.startHour : s.startHour + s.D;
         for(const e of ev){ e.zt = ((e.h - on) % P + P) % P; e.phase = e.zt/P*360; e.cycle = Math.floor((e.h - on)/P + 1e-9); }
         const cm = circMean(ev.map(e => e.phase));
-        Object.assign(g, {period:P, phaseDeg:cm.mean, phaseH:cm.mean/360*P, sd:cm.sd, ref:'light-on (ZT0)', on,
+        Object.assign(g, {period:P, phaseDeg:cm.mean, phaseH:cm.mean/360*P, sd:cm.sd, r:cm.r, ref:'light-on (ZT0)', on,
           from:(i === 0 && res.ld.extendBefore) ? -Infinity : s.startHour, to:i + 1 < segs.length ? segs[i+1].startHour : Infinity});
       }else{
         // 0° reference
@@ -888,7 +912,7 @@ function analyze(S, res){
         if(prev) P0 = prev.L + prev.D;
         if(S.phase_ref === 'zt0_prev'){
           if(prev){ const on0 = prev.startsLight ? prev.startHour : prev.startHour + prev.D;
-            R = on0 + Math.floor((s.startHour - on0)/P0 + 1e-9)*P0; refName = 'projected ZT0 of the preceding LD'; }
+            R = on0 + Math.floor((s.startHour - on0)/P0 + 1e-9)*P0; refName = 'projected ZT0 of the preceding LD'; g.refSeg = segs.indexOf(prev); }
           else notes.push(`${g.label}: no preceding LD condition, so its start is used as 0°.`);
         }else if(S.phase_ref === 'zero'){ R = 0; refName = '0 h of the data'; }
         else if(S.phase_ref === 'day0'){ R = res.origin.hour; refName = 'actogram day 0, 0 h'; }
@@ -906,7 +930,9 @@ function analyze(S, res){
             const se = N > 2 ? Math.sqrt(ssr/(N - 2)/sxx) : NaN;
             const ph = ((b % tau) + tau) % tau;
             ev.forEach(e => { e.fit = b + tau*e.cycle; e.resid = e.t - e.fit; });
-            Object.assign(g, {period:tau, se, r2: syy > 0 ? 1 - ssr/syy : 1, b, phaseH:ph, phaseDeg:ph/tau*360});
+            const seB = N > 2 ? Math.sqrt(ssr/(N - 2)*(1/N + mx*mx/sxx)) : NaN;
+            Object.assign(g, {period:tau, se, r2: syy > 0 ? 1 - ssr/syy : 1, b, phaseH:ph, phaseDeg:ph/tau*360,
+                              seB, phaseSe: seB/tau*360, ct: ph*24/tau});
           }else g.fitNote = 'all points in one cycle';
         }else g.fitNote = 'needs at least 2 points';
       }
@@ -1695,6 +1721,86 @@ function endDrag(e){
 chartHost.addEventListener('pointerup', endDrag);
 chartHost.addEventListener('pointercancel', () => { if(drag && drag.rect) drag.rect.remove(); drag = null; });
 
+// one card per condition: a dial (0° at the top, clockwise) and the results, as in Actogram Phase Analyzer
+function dialSvg(seg, gs){
+  const S = 132, c = S/2, R = 54, ringW = 9, LIGHTC = '#f5d77e', DARKC = '#3b4252';
+  const pt = (deg, r) => [c + r*Math.sin(deg*Math.PI/180), c - r*Math.cos(deg*Math.PI/180)];
+  const arc = (a0, a1, r) => { const [x0, y0] = pt(a0, r), [x1, y1] = pt(a1, r);
+    return `M${x0.toFixed(2)},${y0.toFixed(2)} A${r},${r} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${x1.toFixed(2)},${y1.toFixed(2)}`; };
+  const o = [`<svg viewBox="0 0 ${S} ${S}" width="${S}" height="${S}" role="img" aria-label="Phase dial">`];
+  o.push(`<circle cx="${c}" cy="${c}" r="${R}" fill="#fff" stroke="${seg.mode === 'LL' ? LIGHTC : DARKC}" stroke-width="${ringW}"/>`);
+  if(seg.mode === 'LD' && seg.L > 0 && seg.D > 0) o.push(`<path d="${arc(0, seg.L/(seg.L + seg.D)*360, R)}" fill="none" stroke="${LIGHTC}" stroke-width="${ringW}"/>`);
+  for(const [t, a] of [['0°', 0], ['90°', 90], ['180°', 180], ['270°', 270]]){
+    const [x, y] = pt(a, R - 20); o.push(`<text x="${x.toFixed(1)}" y="${(y + 3).toFixed(1)}" font-size="8" fill="#555" text-anchor="middle">${t}</text>`); }
+  for(const g of gs){
+    const col = g.kind === 'Peak' ? PEAK : TROUGH;
+    const counts = {};
+    for(const e of g.events){
+      const ph = e.zt !== undefined ? e.phase : (Number.isFinite(g.period) ? (((e.t % g.period) + g.period) % g.period)/g.period*360 : NaN);
+      if(!Number.isFinite(ph)) continue;
+      const bin = Math.round(ph/6); counts[bin] = (counts[bin] || 0) + 1;
+      const [x, y] = pt(ph, R - ringW/2 - 3.5 - (counts[bin] - 1)*4.2);
+      o.push(`<circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="2.3" fill="${col}"/>`);
+    }
+    if(Number.isFinite(g.phaseDeg)){
+      const len = (g.mode === 'LD' && Number.isFinite(g.r) ? g.r : 1)*(R - ringW/2 - 2);
+      const [x, y] = pt(g.phaseDeg, len);
+      o.push(`<line x1="${c}" y1="${c}" x2="${x.toFixed(2)}" y2="${y.toFixed(2)}" stroke="${col}" stroke-width="2.6" stroke-linecap="round"/>`);
+    }
+  }
+  o.push(`<circle cx="${c}" cy="${c}" r="2.6" fill="#111"/></svg>`);
+  return o.join('');
+}
+const HEAD_TIPS = {"Mean ZT (h)": "Hours after light-on (ZT0) within the L + D cycle; the phase in hours = phase (°) ÷ 360 × (L + D)", "Phase (h)": "Hours from the 0° reference to the event within one cycle: LD = mean ZT; LL/DD = b mod τ (= phase (°) ÷ 360 × τ)", "Phase (CT)": "Phase (h) in circadian hours (one cycle τ scaled to 24 h): Phase (h) × 24 ÷ τ", "Intercept b (h)": "Fitted event time of cycle 0, in hours after the 0° reference", "Period τ (h)": "Slope of the regression: the free-running period", "r": "Mean resultant length, 0–1: how tightly the points cluster (1 = all at the same phase)"};
+const th = h => `<th${HEAD_TIPS[h] ? ` title="${esc(HEAD_TIPS[h])}"` : ''}>${esc(h)}${HEAD_TIPS[h] ? ' <span aria-hidden="true" style="opacity:.6">ⓘ</span>' : ''}</th>`;
+function renderCards(ana, res){
+  const host = $('anaCards');
+  if(!res.ld || !ana.events.length){ host.innerHTML = ''; return; }
+  const z = res.zero, tz = res.tz, at = h => `${fmtLocal(z + Math.round(h*60)*60000, tz)} (${h.toFixed(2)} h)`;
+  host.innerHTML = res.ld.segs.map((s, i) => {
+    const gs = ana.groups.filter(g => g.seg === i);
+    const name = s.mode === 'LD' ? `LD ${fmtDur2(s.L)}/${fmtDur2(s.D)}` : s.mode;
+    let sub = `Starts ${at(s.startHour)}`;
+    if(s.mode === 'LD') sub += `, begins with ${s.startsLight ? 'light' : 'dark'}. ZT0 = light-on; cycle length ${(s.L + s.D).toFixed(2)} h.`;
+    else{
+      const g0 = gs[0];
+      if(g0) sub += `. 0° = ${g0.refSeg !== undefined ? `projected light-on (ZT0) of LD #${g0.refSeg + 1}: ${at(g0.R)}` : `${g0.ref}: ${at(g0.R)}`}.`;
+      else sub += '.';
+    }
+    const big = ['Peak', 'Trough'].map(kind => {
+      const g = gs.find(x => x.kind === kind); if(!g) return '';
+      const cls = kind === 'Peak' ? 'pk' : 'tr';
+      const line = s.mode === 'LD' ? `${kind}s: mean ZT ${f2(g.phaseH)} h, n = ${g.n}`
+        : Number.isFinite(g.period) ? `${kind}s: τ = ${g.period.toFixed(2)} h (${fmtDur(g.period)}), n = ${g.n}` : `${kind}s: n = ${g.n} (${g.fitNote})`;
+      return `<div><b class="${cls}">${Number.isFinite(g.phaseDeg) ? g.phaseDeg.toFixed(1) + '°' : '–'}</b><span>${esc(line)}</span></div>`;
+    }).join('');
+    let table = '';
+    if(gs.length){
+      const head = s.mode === 'LD' ? ['Kind', 'N', 'Mean phase (°)', 'Mean ZT (h)', 'r', 'Circular SD (°)']
+        : ['Kind', 'N', 'Period τ (h)', '± SE', 'Intercept b (h)', 'Phase (°)', '± SE (°)', 'Phase (h)', 'Phase (CT)', 'R²'];
+      const rows = gs.map(g => {
+        const k = `<span class="${g.kind === 'Peak' ? 'pk' : 'tr'}"><b>${g.kind}s</b></span>`;
+        return s.mode === 'LD' ? [k, g.n, f1(g.phaseDeg), f2(g.phaseH), Number.isFinite(g.r) ? g.r.toFixed(3) : '–', f1(g.sd)]
+          : [k, g.n, Number.isFinite(g.period) ? g.period.toFixed(3) : '–', Number.isFinite(g.se) ? g.se.toFixed(3) : '–', f2(g.b), f1(g.phaseDeg),
+             f1(g.phaseSe), f2(g.phaseH), f2(g.ct), Number.isFinite(g.r2) ? g.r2.toFixed(4) : '–'];
+      });
+      table = `<table><thead><tr>${head.map(th).join('')}</tr></thead><tbody>${rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+      table += s.mode === 'LD'
+        ? `<p class="fn"><b>Mean ZT (h)</b> is the phase in hours: the time after light-on (ZT0) within the ${(s.L + s.D).toFixed(2)}-h cycle, = phase (°) ÷ 360 × (L + D).</p>`
+        : `<p class="fn"><b>Phase (h)</b> is where the rhythm sits within one cycle: the hours from the 0° reference to the fitted event, b mod τ (= phase (°) ÷ 360 × τ). <b>Phase (CT)</b> is the same in circadian hours, with one cycle τ scaled to 24 h: Phase (h) × 24 ÷ τ.</p>`;
+      const ev = gs.flatMap(g => g.events.map(e => ({e, g}))).sort((a, b) => a.e.h - b.e.h);
+      const eh = ['Kind', 'Time (h)', 'Local date/time', 'Cycle', s.mode === 'LD' ? 'ZT (h)' : 't from 0° (h)', 'Phase (°)', ...(s.mode === 'LD' ? [] : ['Residual (h)'])];
+      const er = ev.map(({e, g}) => {
+        const ph = e.zt !== undefined ? e.phase : (Number.isFinite(g.period) ? (((e.t % g.period) + g.period) % g.period)/g.period*360 : NaN);
+        return [`<span class="${e.kind === 'Peak' ? 'pk' : 'tr'}">${e.kind}</span>`, e.h.toFixed(2), esc(fmtLocal(z + Math.round(e.h*60)*60000, tz)), e.cycle,
+                f2(e.zt !== undefined ? e.zt : e.t), f1(ph), ...(s.mode === 'LD' ? [] : [e.resid !== undefined ? f2(e.resid) : '–'])];
+      });
+      table += `<details><summary>Each selected point</summary><table><thead><tr>${eh.map(h => `<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${er.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></details>`;
+    }else table = '<p class="none">No points selected in this condition.</p>';
+    return `<div class="rcard"><div>${dialSvg(s, gs)}</div><div><h4>#${i + 1} ${esc(name)}</h4><p class="sub">${esc(sub)}</p>${gs.length ? `<div class="big">${big}</div>` : ''}${table}</div></div>`;
+  }).join('');
+}
+
 let lastResults = {sum:[], ev:[]};
 function tableHtml(rows){
   const cell = (c, tag) => `<${tag}${tag === 'td' && !/^[-–]?\d/.test(String(c)) ? ' class="l"' : ''}>${esc(c)}</${tag}>`;
@@ -1704,6 +1810,7 @@ function renderAnalysis(res){
   const ana = analyze(state, res);
   $('anaNote').textContent = ana.note;
   const sum = resultRows(ana), ev = eventRows(ana, res);
+  renderCards(ana, res);
   $('anaTable').innerHTML = ana.groups.length ? tableHtml(sum) : '';
   $('anaEvents').innerHTML = ana.events.length ? tableHtml(ev) : '';
   const np = ana.events.filter(e => e.kind === 'Peak').length, nt = ana.events.length - np;
