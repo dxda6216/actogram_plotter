@@ -1,1 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Actogram Phase Analyzer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#F5F7F6; --surface:#FFFFFF; --ink:#1D2633; --muted:#5B6675; --rule:#D5DBE0;
+  --rec:#E7F3EA; --rec-edge:#8DBF9A; --view:#E6EEF8; --view-edge:#8FA9CF;
+  --light:#F6DC85; --dark:#3B4356; --none:#E9ECEF;
+  --peak:#C23048; --trough:#2563C9; --sel:#0F9D6B; --mark:#E07B12; --zero:#2F9E44;
+  --btn:#FFFFFF; --btn-ink:#1D2633; --accent:#1F5E8F;
+  --font:"Atkinson Hyperlegible", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#171B22; --surface:#1F2530; --ink:#E6E9EE; --muted:#A3ADBA; --rule:#343C4A;
+    --rec:#1D2D24; --rec-edge:#3F7350; --view:#1C2636; --view-edge:#3F5C86;
+    --light:#C7A64A; --dark:#0E1218; --none:#2A313C;
+    --peak:#FF6B81; --trough:#6FA3FF; --sel:#3DDC97; --mark:#FFA24C; --zero:#5CD073;
+    --btn:#27303D; --btn-ink:#E6E9EE; --accent:#7FB6E6;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#171B22; --surface:#1F2530; --ink:#E6E9EE; --muted:#A3ADBA; --rule:#343C4A;
+  --rec:#1D2D24; --rec-edge:#3F7350; --view:#1C2636; --view-edge:#3F5C86;
+  --light:#C7A64A; --dark:#0E1218; --none:#2A313C;
+  --peak:#FF6B81; --trough:#6FA3FF; --sel:#3DDC97; --mark:#FFA24C; --zero:#5CD073;
+  --btn:#27303D; --btn-ink:#E6E9EE; --accent:#7FB6E6;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.45;font-variant-numeric:tabular-nums}
+header.top{padding:22px 24px 8px;max-width:1500px;margin:0 auto}
+header.top h1{font-size:1.75rem;margin:0;letter-spacing:-.01em;font-weight:700}
+header.top p{margin:.3rem 0 0;color:var(--muted);max-width:70ch}
+.layout{display:grid;grid-template-columns:minmax(300px,380px) minmax(0,1fr);gap:20px;padding:12px 24px 40px;max-width:1500px;margin:0 auto;align-items:start}
+@media (max-width:900px){.layout{grid-template-columns:1fr;padding:12px 12px 40px}header.top{padding:16px 12px 4px}}
+aside{display:flex;flex-direction:column;gap:12px}
+.box{border:1px solid var(--rule);border-left:5px solid var(--rule);border-radius:6px;padding:12px 14px;background:var(--surface)}
+.box.rec{background:var(--rec);border-left-color:var(--rec-edge)}
+.box.view{background:var(--view);border-left-color:var(--view-edge)}
+.box h2{font-size:1rem;margin:0 0 8px}
+.box p.note{font-size:.84rem;color:var(--muted);margin:6px 0 0}
+label{display:block;font-size:.88rem;margin:6px 0 2px}
+input,select,textarea,button{font:inherit;color:var(--ink)}
+input[type=text],input[type=number],input[type=datetime-local],select,textarea{background:var(--surface);border:1px solid var(--rule);border-radius:4px;padding:4px 6px;max-width:100%}
+.cols2 select,.cols2 input[type=datetime-local]{width:100%}
+textarea{width:100%;height:120px;resize:vertical;font-size:.9rem}
+.cols2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+button{background:var(--btn);color:var(--btn-ink);border:1px solid var(--rule);border-radius:4px;padding:4px 9px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);color:var(--surface);border-color:var(--accent)}
+button[aria-pressed=true]{background:var(--accent);color:var(--surface);border-color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.cond{border:1px solid var(--rec-edge);border-radius:5px;padding:6px 8px;margin:6px 0;background:var(--surface)}
+.cond .row > *{flex:0 0 auto}
+.cond input[type=text]{width:4.2em}
+.cond .x{margin-left:auto;padding:2px 8px}
+.small{font-size:.82rem;color:var(--muted)}
+.tune{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.tune button{padding:2px 6px;font-size:.82rem}
+.main{display:flex;flex-direction:column;gap:16px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:12px 14px}
+.toolbar{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-bottom:8px}
+.seg{display:inline-flex;border:1px solid var(--rule);border-radius:5px;overflow:hidden}
+.seg button{border:0;border-radius:0;border-right:1px solid var(--rule)}
+.seg button:last-child{border-right:0}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.85rem;color:var(--muted);align-items:center}
+.sw{display:inline-block;width:14px;height:10px;border-radius:2px;vertical-align:-1px;margin-right:4px;border:1px solid var(--rule)}
+.plotwrap{position:relative;overflow-x:auto}
+#acto{display:block;width:100%;min-width:640px;user-select:none;-webkit-user-select:none;touch-action:none}
+#tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--surface);font-size:.8rem;padding:4px 7px;border-radius:4px;white-space:nowrap;display:none;z-index:5}
+.quick{display:flex;flex-direction:column;gap:4px;margin-top:8px}
+.quick .row{font-size:.86rem}
+.quick .lab{min-width:16em}
+#results h2{font-size:1.15rem;margin:0 0 4px}
+.rescard{border-top:1px solid var(--rule);padding:14px 0 6px;display:grid;grid-template-columns:140px minmax(0,1fr);gap:16px}
+.rescard:first-of-type{border-top:0}
+@media (max-width:600px){.rescard{grid-template-columns:1fr}}
+.rescard h3{font-size:1.02rem;margin:0}
+.rescard .meta{font-size:.84rem;color:var(--muted);margin:2px 0 8px}
+.big{display:flex;flex-wrap:wrap;gap:22px;margin:4px 0 10px}
+.big div{line-height:1.15}
+.big b{font-size:1.6rem;font-weight:700}
+.big span{display:block;font-size:.8rem;color:var(--muted)}
+.big .pk b{color:var(--peak)} .big .tr b{color:var(--trough)}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;font-size:.86rem;min-width:100%}
+th,td{padding:3px 8px;border-bottom:1px solid var(--rule);text-align:right;white-space:nowrap}
+th{font-weight:700;color:var(--muted)}
+th:first-child,td:first-child{text-align:left}
+td.pk{color:var(--peak);font-weight:700} td.tr{color:var(--trough);font-weight:700}
+details summary{cursor:pointer;font-size:.88rem;color:var(--accent);margin:6px 0}
+.warn{color:var(--mark);font-size:.84rem;margin:4px 0}
+.empty{color:var(--muted);padding:10px 0}
+#tsv{width:100%;height:160px;font-size:.8rem}
+.howto{font-size:.85rem;color:var(--muted);margin:6px 0 0}
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>Actogram Phase Analyzer</h1>
+  <p>Draw peaks and troughs as an actogram, pick the ones you want with the mouse, and get their phase in LD, LL and DD. In LL and DD the period and phase come from a linear regression of event time on cycle number.</p>
+</header>
 
+<main class="layout">
+<aside>
+  <section class="box rec">
+    <h2>Clock time of the data</h2>
+    <div class="cols2">
+      <div><label for="t0">0 h =</label><input type="datetime-local" id="t0" data-k="t0"></div>
+      <div><label for="tz">Time zone</label><select id="tz" data-k="tz"></select></div>
+    </div>
+    <p class="note">Enter every date and time as the local wall-clock time on that day (standard or daylight time). Daylight-saving changes are handled automatically.</p>
+  </section>
+
+  <section class="box rec">
+    <h2>Peaks and troughs (hours after 0 h)</h2>
+    <div class="cols2">
+      <div><label for="peaks" style="color:var(--peak)">● Peaks (h)</label><textarea id="peaks" data-k="peaks" spellcheck="false"></textarea></div>
+      <div><label for="troughs" style="color:var(--trough)">▼ Troughs (h)</label><textarea id="troughs" data-k="troughs" spellcheck="false"></textarea></div>
+    </div>
+    <p class="note">One value per line; a pasted spreadsheet column works. Negative values are allowed.</p>
+    <div class="row" style="margin-top:6px"><button id="loadEx">Load example</button><button id="clearData">Clear data</button></div>
+  </section>
+
+  <section class="box rec">
+    <h2>Light/dark conditions</h2>
+    <div id="conds"></div>
+    <div class="row"><button id="addCond">Add condition</button></div>
+    <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" data-k="extendFirst"> Extend the first condition before its start time</label>
+    <p class="note">LD uses L, D and the period it begins with; LL is constant light, DD constant darkness. Each condition lasts until the next one starts.</p>
+  </section>
+
+  <section class="box view">
+    <h2>Actogram view</h2>
+    <label for="day0Mode">Day 0, 0 h (left end of the top row)</label>
+    <select id="day0Mode" data-k="day0Mode">
+      <option value="zero">0 h of the data</option>
+      <option value="midnight">Midnight on the day of 0 h</option>
+      <option value="firstOn">Light-on of the first condition (LL/DD: its start)</option>
+      <option value="firstMidnight">Midnight on the day the first condition started</option>
+      <option value="custom">Another date/time</option>
+    </select>
+    <div id="day0CustomWrap"><label for="day0Custom">Date/time</label><input type="datetime-local" id="day0Custom" data-k="day0Custom"></div>
+    <div class="small" style="margin-top:4px">Shift: <span id="day0OffTxt"></span></div>
+    <div class="tune" data-tune="day0Off"></div>
+    <label for="Tstr">Period T (hh:mm)</label>
+    <div class="row"><input type="text" id="Tstr" style="width:6em"><button id="Treset">24:00</button></div>
+    <div class="tune" data-tune="Tmin"></div>
+    <div class="cols2" style="margin-top:6px">
+      <div><label>Plot</label><div class="seg" id="plotSeg"><button data-v="double">Double</button><button data-v="single">Single</button></div></div>
+      <div><label>Row labels</label><div class="seg" id="labelSeg"><button data-v="date">Date</button><button data-v="number">Number</button></div></div>
+    </div>
+    <div class="cols2">
+      <div><label for="major">Major ticks (h)</label><input type="number" id="major" data-k="major" data-num min="1" step="1" style="width:5em"></div>
+      <div><label for="minor">Minor ticks (h)</label><input type="number" id="minor" data-k="minor" data-num min="0" step="1" style="width:5em"></div>
+    </div>
+    <label style="display:flex;gap:6px;align-items:center;margin-top:8px"><input type="checkbox" data-k="rowsAuto"> Rows automatic</label>
+    <div class="row" id="rowsManual"><span class="small">First</span><input type="number" data-k="rMin" data-num style="width:5em"><span class="small">Last</span><input type="number" data-k="rMax" data-num style="width:5em"></div>
+    <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" data-k="showFit"> Draw regression lines (LL/DD)</label>
+  </section>
+
+  <section class="box view">
+    <h2>Phase reference</h2>
+    <label for="ref">0° for LL and DD is</label>
+    <select id="ref" data-k="ref">
+      <option value="zt0">Projected light-on (ZT0) of the preceding LD cycle</option>
+      <option value="start">Start of the condition</option>
+      <option value="zero">0 h of the data</option>
+      <option value="day0">Actogram day 0, 0 h</option>
+    </select>
+    <p class="note">LD: phase = ZT ÷ (L + D) × 360°, with ZT0 at light-on.<br>LL/DD: event time t (h after the reference) is fitted as t = b + τ·n, where n is the cycle number (cycle 0 begins at the reference). The slope τ is the free-running period; the phase is (b mod τ) ÷ τ × 360°.</p>
+  </section>
+</aside>
+
+<div class="main">
+  <section class="card">
+    <div class="toolbar">
+      <div class="row"><span class="small">Drag to</span><div class="seg" id="dragSeg"><button data-v="add">Select</button><button data-v="remove">Deselect</button></div></div>
+      <div class="row"><span class="small">Applies to</span><div class="seg" id="filterSeg"><button data-v="both">Both</button><button data-v="peak">Peaks</button><button data-v="trough">Troughs</button></div></div>
+      <button id="clearSel">Clear selection</button>
+      <span class="small" id="selCount"></span>
+    </div>
+    <div class="legend">
+      <span><span class="sw" style="background:var(--light)"></span>Light</span>
+      <span><span class="sw" style="background:var(--dark)"></span>Dark</span>
+      <span><span class="sw" style="background:var(--none)"></span>No condition</span>
+      <span style="color:var(--peak)">● Peak</span>
+      <span style="color:var(--trough)">▼ Trough</span>
+      <span style="color:var(--sel)">◯ Selected</span>
+      <span style="color:var(--zero)">✱ 0 h</span>
+      <span style="color:var(--mark)">│ Condition change</span>
+    </div>
+    <div class="plotwrap" id="plotwrap">
+      <svg id="acto" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Actogram"></svg>
+      <div id="tip"></div>
+    </div>
+    <p class="howto">Click a point to select or deselect it. Drag a box to select many at once; hold Alt (Option) while dragging to deselect. In the double plot each point appears twice; either copy works.</p>
+    <div class="quick" id="quick"></div>
+  </section>
+
+  <section class="card" id="results"></section>
+
+  <section class="card">
+    <h2 style="font-size:1rem;margin:0 0 8px">Files</h2>
+    <div class="row">
+      <button id="dlCsv">Download results (CSV)</button>
+      <button id="dlSvg">Download actogram (SVG)</button>
+      <button id="dlPng">Download actogram (PNG)</button>
+      <button id="saveSet">Save settings and data…</button>
+      <button id="openSet">Open settings and data…</button>
+      <input type="file" id="openFile" accept=".json,application/json" hidden>
+    </div>
+    <p class="small" style="margin:6px 0 0">Settings files (.json) hold the clock time, data, conditions, view options and the current selection. They open in this page and in the desktop app.</p>
+    <details>
+      <summary>Results as tab-separated text (for a spreadsheet)</summary>
+      <textarea id="tsv" readonly spellcheck="false"></textarea>
+      <div class="row"><button id="copyTsv">Copy to clipboard</button><span class="small" id="copyMsg"></span></div>
+    </details>
+  </section>
+</div>
+</main>
+
+<script>
+(function(){
+"use strict";
+const STORE = "actogram-phase-analyzer-v1";
+const EX = {
+  t0:"2026-03-02T08:00", tz:"America/Chicago",
+  peaks:"3.57\n28.35\n51.53\n78.47\n105.44\n130.98\n158.19\n184.89\n210.89\n237.38\n267.18\n290.88\n315.10\n339.38\n362.37\n386.50\n410.48\n434.73\n462.82\n487.98\n513.97\n541.26\n567.65\n593.60\n620.18\n646.80\n678.76\n708.85\n737.44\n767.05\n797.27\n827.57\n857.19\n887.10\n917.06",
+  troughs:"16.17\n39.77\n65.49\n91.14\n118.60\n145.52\n171.20\n199.04\n223.86\n250.18\n279.28\n302.97\n327.31\n351.09\n375.32\n398.92\n423.00\n447.10\n475.17\n501.11\n527.70\n554.30\n581.03\n608.19\n634.09\n660.25\n690.83\n721.76\n752.28\n781.65\n812.21\n841.83\n872.23\n902.09",
+  conds:[
+    {type:"LD",L:"12:00",D:"12:00",begins:"L",start:"2026-02-25T06:00"},
+    {type:"DD",L:"12:00",D:"12:00",begins:"L",start:"2026-03-04T18:00"},
+    {type:"LD",L:"12:00",D:"12:00",begins:"L",start:"2026-03-13T06:00"},
+    {type:"LL",L:"12:00",D:"12:00",begins:"L",start:"2026-03-21T06:00"},
+    {type:"LD",L:"15:00",D:"15:00",begins:"L",start:"2026-03-30T06:00"}
+  ]
+};
+const DEF = {
+  t0:EX.t0, tz:EX.tz, peaks:EX.peaks, troughs:EX.troughs, conds:JSON.parse(JSON.stringify(EX.conds)),
+  extendFirst:false, day0Mode:"midnight", day0Custom:"", day0Off:0, Tmin:1440, plot:"double",
+  rowLabel:"date", major:6, minor:1, rowsAuto:true, rMin:0, rMax:10, showFit:true, ref:"zt0",
+  dragMode:"add", filter:"both", sel:[]
+};
+let S;
+try{ const raw = localStorage.getItem(STORE); S = Object.assign({}, DEF, raw ? JSON.parse(raw) : {}); }catch(e){ S = Object.assign({}, DEF); }
+let sel = new Set(S.sel || []);
+function save(){ try{ S.sel=[...sel]; localStorage.setItem(STORE, JSON.stringify(S)); }catch(e){} }
+
+/* ---------- time-zone helpers ---------- */
+const fmtCache = {};
+function dtf(tz){
+  if(!fmtCache[tz]) fmtCache[tz] = new Intl.DateTimeFormat("en-US",{timeZone:tz,hourCycle:"h23",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit",timeZoneName:"short"});
+  return fmtCache[tz];
+}
+function parts(ms,tz){
+  const o={}; for(const p of dtf(tz).formatToParts(new Date(ms))) o[p.type]=p.value;
+  if(o.hour==="24") o.hour="00";
+  return o;
+}
+function tzOff(ms,tz){
+  const p=parts(ms,tz);
+  const asUTC=Date.UTC(+p.year,+p.month-1,+p.day,+p.hour,+p.minute,+p.second);
+  return asUTC - Math.floor(ms/1000)*1000;
+}
+function zonedToUtc(str,tz){
+  const m=/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(str||""); if(!m) return null;
+  const guess=Date.UTC(+m[1],+m[2]-1,+m[3],+m[4],+m[5]);
+  const o1=tzOff(guess,tz); let t=guess-o1; const o2=tzOff(t,tz); if(o2!==o1) t=guess-o2;
+  return t;
+}
+const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function fmtLocal(ms,tz){ const p=parts(ms,tz); return `${p.year}-${p.month}-${p.day} ${p.hour}:${p.minute} ${p.timeZoneName}`; }
+function fmtShort(ms,tz,withTime){ const p=parts(ms,tz); return `${MON[+p.month-1]} ${p.day}`+(withTime?` ${p.hour}:${p.minute}`:""); }
+function localDate(ms,tz){ const p=parts(ms,tz); return `${p.year}-${p.month}-${p.day}`; }
+
+/* ---------- small utils ---------- */
+const $=s=>document.querySelector(s);
+const mod=(a,b)=>((a%b)+b)%b;
+function parseHM(s){ s=String(s||"").trim(); if(!s) return NaN; if(s.includes(":")){ const [h,m]=s.split(":"); const sign=h.trim().startsWith("-")?-1:1; return sign*(Math.abs(+h)*60+(+m||0)); } return parseFloat(s)*60; }
+function fmtHM(min){ const sign=min<0?"−":""; min=Math.abs(Math.round(min)); return `${sign}${String(Math.floor(min/60)).padStart(2,"0")}:${String(min%60).padStart(2,"0")}`; }
+function fmtH(h,d=2){ return isFinite(h)? h.toFixed(d):"–"; }
+function esc(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+function parseList(txt){ return String(txt||"").split(/[\n\r\t ;,]+/).map(v=>v.trim()).filter(v=>v!=="").map(Number).filter(v=>isFinite(v)); }
+
+/* ---------- model ---------- */
+let M = {};
+function buildModel(){
+  const tz=S.tz;
+  const t0ms=zonedToUtc(S.t0,tz);
+  const H = ms => (ms - t0ms)/3.6e6;
+  const events=[];
+  parseList(S.peaks).forEach((t,i)=>events.push({id:"p"+i,kind:"peak",idx:i,t}));
+  parseList(S.troughs).forEach((t,i)=>events.push({id:"t"+i,kind:"trough",idx:i,t}));
+  for(const id of [...sel]) if(!events.some(e=>e.id===id)) sel.delete(id);
+  let conds=[];
+  if(t0ms!==null){
+    S.conds.forEach((c,ci)=>{
+      const ms=zonedToUtc(c.start,tz); if(ms===null) return;
+      const s=H(ms);
+      const L=parseHM(c.L)/60, D=parseHM(c.D)/60;
+      const o={ci, type:c.type, s, ms, L, D, begins:c.begins};
+      if(c.type==="LD"){
+        if(!(L>=0 && D>=0 && L+D>0)) return;
+        o.P=L+D; o.on = c.begins==="D" ? s+D : s;
+      }
+      conds.push(o);
+    });
+    conds.sort((a,b)=>a.s-b.s);
+    conds.forEach((c,i)=>{ c.no=i+1; c.e = i+1<conds.length? conds[i+1].s : Infinity; c.sEff = (i===0 && S.extendFirst)? -Infinity : c.s; });
+  }
+  // day 0
+  const T=S.Tmin/60;
+  let D0=0;
+  if(t0ms!==null){
+    if(S.day0Mode==="midnight") D0=H(zonedToUtc(localDate(t0ms,tz)+"T00:00",tz));
+    else if(S.day0Mode==="firstOn" && conds.length) D0 = conds[0].type==="LD"? conds[0].on : conds[0].s;
+    else if(S.day0Mode==="firstMidnight" && conds.length) D0=H(zonedToUtc(localDate(conds[0].ms,tz)+"T00:00",tz));
+    else if(S.day0Mode==="custom"){ const ms=zonedToUtc(S.day0Custom,tz); if(ms!==null) D0=H(ms); }
+  }
+  D0 += S.day0Off/60;
+  M={tz,t0ms,H,events,conds,T,D0, W: S.plot==="double"?2*T:T};
+}
+function condAt(t){ for(const c of M.conds) if(t>=c.sEff && t<c.e) return c; return null; }
+function condLabel(c){ return c.type==="LD" ? `LD ${fmtHM(c.L*60)}/${fmtHM(c.D*60)}` : c.type; }
+function hoursToMs(h){ return M.t0ms + h*3.6e6; }
+
+/* ---------- phase reference for LL/DD ---------- */
+function refFor(c){
+  if(S.ref==="start") return {t:c.s, name:"start of the condition"};
+  if(S.ref==="zero") return {t:0, name:"0 h of the data"};
+  if(S.ref==="day0") return {t:M.D0, name:"actogram day 0, 0 h"};
+  const prev=M.conds.filter(x=>x.type==="LD" && x.s<c.s).pop();
+  if(!prev) return {t:c.s, name:"start of the condition (no preceding LD cycle)", fallback:true};
+  const k=Math.floor((c.s-prev.on)/prev.P+1e-9);
+  return {t:prev.on+k*prev.P, name:`projected light-on (ZT0) of LD #${prev.no}`};
+}
+
+/* ---------- statistics ---------- */
+function linreg(xs,ys){
+  const n=xs.length; const mx=xs.reduce((a,b)=>a+b,0)/n, my=ys.reduce((a,b)=>a+b,0)/n;
+  let sxx=0,sxy=0,syy=0; for(let i=0;i<n;i++){ const dx=xs[i]-mx, dy=ys[i]-my; sxx+=dx*dx; sxy+=dx*dy; syy+=dy*dy; }
+  if(sxx===0) return null;
+  const slope=sxy/sxx, icpt=my-slope*mx;
+  let sse=0; for(let i=0;i<n;i++){ const r=ys[i]-(icpt+slope*xs[i]); sse+=r*r; }
+  const out={slope,icpt,n,r2: syy>0? 1-sse/syy : 1};
+  if(n>2){ const s=Math.sqrt(sse/(n-2)); out.seSlope=s/Math.sqrt(sxx); out.seIcpt=s*Math.sqrt(1/n+mx*mx/sxx); }
+  return out;
+}
+function assignCycles(ts,tref,Tg){
+  let tau=Tg, ns=[];
+  for(let it=0;it<8;it++){
+    const nn=[]; nn[0]=Math.floor((ts[0]-tref)/tau+1e-9);
+    for(let i=1;i<ts.length;i++) nn[i]=nn[i-1]+Math.round((ts[i]-ts[i-1])/tau);
+    const same = ns.length===nn.length && nn.every((v,i)=>v===ns[i]);
+    ns=nn; if(same) break;
+    const f=linreg(ns,ts.map(t=>t-tref)); if(!f || !(f.slope>0)) break; tau=f.slope;
+  }
+  return ns;
+}
+function circ(angles){
+  let c=0,s=0; for(const a of angles){ c+=Math.cos(a*Math.PI/180); s+=Math.sin(a*Math.PI/180); }
+  c/=angles.length; s/=angles.length; const r=Math.hypot(c,s);
+  return {mean: mod(Math.atan2(s,c)*180/Math.PI,360), r, sd: r>0? Math.sqrt(Math.max(0,-2*Math.log(r)))*180/Math.PI : NaN};
+}
+
+function analyze(){
+  const groups=[];
+  const outside={peak:[],trough:[]};
+  const byCond=new Map();
+  for(const e of M.events){ if(!sel.has(e.id)) continue;
+    const c=condAt(e.t); if(!c){ outside[e.kind].push(e); continue; }
+    if(!byCond.has(c)) byCond.set(c,{peak:[],trough:[]});
+    byCond.get(c)[e.kind].push(e);
+  }
+  for(const c of M.conds){ const g=byCond.get(c); if(!g) continue;
+    const res={c, kinds:{}};
+    if(c.type==="LD"){
+      for(const k of ["peak","trough"]){ const ev=g[k].slice().sort((a,b)=>a.t-b.t); if(!ev.length) continue;
+        const pts=ev.map(e=>{ const zt=mod(e.t-c.on,c.P); return {e, zt, ang:zt/c.P*360, cyc:Math.floor((e.t-c.on)/c.P)}; });
+        const cs=circ(pts.map(p=>p.ang));
+        res.kinds[k]={pts, mean:cs.mean, r:cs.r, sd:cs.sd, meanZT:cs.mean/360*c.P};
+      }
+    } else {
+      const ref=refFor(c); res.ref=ref;
+      for(const k of ["peak","trough"]){ const ev=g[k].slice().sort((a,b)=>a.t-b.t); if(!ev.length) continue;
+        const ts=ev.map(e=>e.t);
+        const ns=assignCycles(ts,ref.t,M.T);
+        const ys=ts.map(t=>t-ref.t);
+        const dup=ns.some((v,i)=>i>0 && v===ns[i-1]);
+        const fit = new Set(ns).size>=2 ? linreg(ns,ys) : null;
+        const o={dup, fit};
+        if(fit){
+          const tau=fit.slope; o.tau=tau; o.b=fit.icpt;
+          o.phaseH=mod(fit.icpt,tau); o.phase=o.phaseH/tau*360;
+          o.ct=o.phaseH*24/tau;
+          if(fit.seIcpt!==undefined) o.sePhase=fit.seIcpt/tau*360;
+          o.pts=ev.map((e,i)=>{ const pred=fit.icpt+tau*ns[i]; const res_=ys[i]-pred; return {e,n:ns[i],rel:ys[i],resid:res_,ang:mod(ys[i]-tau*ns[i],tau)/tau*360}; });
+        } else {
+          o.pts=ev.map((e,i)=>({e,n:ns[i],rel:ys[i],resid:NaN,ang:mod(ys[i],M.T)/M.T*360}));
+        }
+        res.kinds[k]=o;
+      }
+    }
+    groups.push(res);
+  }
+  return {groups, outside};
+}
+
+/* ---------- plot ---------- */
+const NS="http://www.w3.org/2000/svg";
+const G={ML:118, MR:70, MT:34, MB:46, RH:22, VW:1000};
+let hitPts=[];
+function rowRange(){
+  if(!S.rowsAuto) return [Math.min(S.rMin,S.rMax), Math.max(S.rMin,S.rMax)];
+  const ts=M.events.map(e=>e.t);
+  if(!ts.length){ for(const c of M.conds){ if(isFinite(c.s)) ts.push(c.s); } }
+  if(!ts.length) return [0,6];
+  let lo=Math.floor((Math.min(...ts)-M.D0)/M.T), hi=Math.floor((Math.max(...ts)-M.D0)/M.T);
+  if(hi-lo>400) hi=lo+400;
+  return [lo,hi];
+}
+function shadeSegs(a,b){
+  const out=[];
+  for(const c of M.conds){
+    const s=Math.max(a,c.sEff), e=Math.min(b,c.e); if(e<=s) continue;
+    if(c.type==="LL") out.push([s,e,"light"]);
+    else if(c.type==="DD") out.push([s,e,"dark"]);
+    else {
+      let k=Math.floor((s-c.on)/c.P)-1;
+      for(;;k++){ const on=c.on+k*c.P; if(on>=e) break;
+        const l0=Math.max(s,on), l1=Math.min(e,on+c.L); if(l1>l0) out.push([l0,l1,"light"]);
+        const d0=Math.max(s,on+c.L), d1=Math.min(e,on+c.P); if(d1>d0) out.push([d0,d1,"dark"]);
+      }
+    }
+  }
+  return out;
+}
+function render(){
+  const svg=$("#acto"); svg.innerHTML="";
+  const [r0,r1]=rowRange(); const nR=r1-r0+1;
+  const PW=G.VW-G.ML-G.MR, H=G.MT+nR*G.RH+G.MB;
+  svg.setAttribute("viewBox",`0 0 ${G.VW} ${H}`);
+  const W=M.W, T=M.T;
+  const X=(t,ws)=>G.ML+(t-ws)/W*PW;
+  const el=(n,a,p)=>{ const e=document.createElementNS(NS,n); for(const k in a) e.setAttribute(k,a[k]); (p||svg).appendChild(e); return e; };
+  const defs=el("defs",{}); const cp=el("clipPath",{id:"plotclip"},defs); el("rect",{x:G.ML,y:G.MT,width:PW,height:nR*G.RH},cp);
+  const gBg=el("g",{}), gGrid=el("g",{}), gMark=el("g",{}), gFit=el("g",{"clip-path":"url(#plotclip)"}), gPts=el("g",{}), gTxt=el("g",{});
+  // ticks
+  const maj=Math.max(0.25,+S.major||6), mnr=+S.minor||0;
+  if(mnr>0 && W/mnr<=400) for(let h=0;h<=W+1e-9;h+=mnr){ const x=G.ML+h/W*PW; el("line",{x1:x,x2:x,y1:G.MT-3,y2:G.MT,stroke:"var(--muted)","stroke-width":.6},gGrid); el("line",{x1:x,x2:x,y1:G.MT+nR*G.RH,y2:G.MT+nR*G.RH+3,stroke:"var(--muted)","stroke-width":.6},gGrid); }
+  for(let h=0;h<=W+1e-9;h+=maj){ const x=G.ML+h/W*PW;
+    el("line",{x1:x,x2:x,y1:G.MT-6,y2:G.MT+nR*G.RH+6,stroke:"var(--rule)","stroke-width":.8},gGrid);
+    for(const [y,base] of [[G.MT-10,"auto"],[G.MT+nR*G.RH+20,"auto"]]){ const tx=el("text",{x,y,"text-anchor":"middle","font-size":11,fill:"var(--muted)"},gTxt); tx.textContent=+h.toFixed(2); }
+  }
+  const xl=el("text",{x:G.ML+PW/2,y:H-2,"text-anchor":"middle","font-size":11,fill:"var(--muted)"},gTxt); xl.textContent=`Hours from the start of each row (T = ${fmtHM(S.Tmin)})`;
+  hitPts=[];
+  const zeroRowStart = r => M.D0 + r*T;
+  for(let r=r0;r<=r1;r++){
+    const y=G.MT+(r-r0)*G.RH, ws=zeroRowStart(r), we=ws+W;
+    el("rect",{x:G.ML,y:y+2,width:PW,height:G.RH-4,fill:"var(--none)"},gBg);
+    for(const [a,b,kind] of shadeSegs(ws,we)) el("rect",{x:X(a,ws),y:y+2,width:Math.max(0,X(b,ws)-X(a,ws))+.3,height:G.RH-4,fill:kind==="light"?"var(--light)":"var(--dark)"},gBg);
+    // row label
+    const lab=el("text",{x:G.ML-8,y:y+G.RH/2+4,"text-anchor":"end","font-size":11,fill:"var(--ink)"},gTxt);
+    if(S.rowLabel==="number" || M.t0ms===null) lab.textContent=String(r);
+    else { const ms=hoursToMs(ws); const p=parts(ms,M.tz); lab.textContent=fmtShort(ms,M.tz,!(p.hour==="00"&&p.minute==="00")); }
+    // condition changes
+    for(const c of M.conds){ if(!isFinite(c.s)) continue;
+      if(c.s>=ws && c.s<we){ const x=X(c.s,ws); el("line",{x1:x,x2:x,y1:y,y2:y+G.RH,stroke:"var(--mark)","stroke-width":2.2},gMark);
+        if(c.s<ws+T){ const t=el("text",{x:G.ML+PW+6,y:y+G.RH/2+4,"font-size":11,"font-weight":700,fill:"var(--mark)"},gTxt); t.textContent="› "+(c.type==="LD"?"LD":c.type); } }
+    }
+    if(M.t0ms!==null && 0>=ws && 0<we){ const t=el("text",{x:X(0,ws),y:y+G.RH/2+5,"text-anchor":"middle","font-size":15,"font-weight":700,fill:"var(--zero)"},gMark); t.textContent="✱"; }
+    // events
+    for(const e of M.events){ if(e.t<ws || e.t>=we) continue;
+      const x=X(e.t,ws), cy=y+G.RH/2, on=sel.has(e.id);
+      const g=el("g",{"data-id":e.id,style:"cursor:pointer"},gPts);
+      el("circle",{cx:x,cy,r:9,fill:"transparent"},g);
+      if(on) el("circle",{cx:x,cy,r:7.6,fill:"none",stroke:"var(--sel)","stroke-width":2.4},g);
+      if(e.kind==="peak") el("circle",{cx:x,cy,r:4.3,fill:"var(--peak)",stroke:"var(--surface)","stroke-width":1.1},g);
+      else el("path",{d:`M${x-4.8},${cy-3.6} L${x+4.8},${cy-3.6} L${x},${cy+4.6} Z`,fill:"var(--trough)",stroke:"var(--surface)","stroke-width":1.1},g);
+      hitPts.push({id:e.id,kind:e.kind,x,y:cy});
+    }
+  }
+  // regression lines
+  if(S.showFit && M.analysis){
+    for(const g of M.analysis.groups){ if(g.c.type==="LD") continue;
+      for(const k of ["peak","trough"]){ const o=g.kinds[k]; if(!o||!o.fit) continue;
+        const ns=o.pts.map(p=>p.n); const nLo=Math.min(...ns)-1, nHi=Math.max(...ns)+1;
+        const pred=n=>g.ref.t+o.b+o.tau*n;
+        const col=k==="peak"?"var(--peak)":"var(--trough)";
+        for(let n=nLo;n<nHi;n++){ const pa=pred(n), pb=pred(n+1);
+          const lo=Math.max(g.c.s,-1e12), hi=Math.min(g.c.e,1e12);
+          if(pb<lo || pa>hi) continue;
+          for(let r=r0;r<r1;r++){ const ws=zeroRowStart(r); if(pa<ws||pa>=ws+W) continue;
+            const x1=X(pa,ws), y1=G.MT+(r-r0)*G.RH+G.RH/2, x2=X(pb,ws+T), y2=y1+G.RH;
+            el("line",{x1,y1,x2,y2,stroke:col,"stroke-width":1.6,"stroke-dasharray":"5 3",opacity:.9},gFit);
+          }
+        }
+      }
+    }
+  }
+  const sr=el("rect",{id:"selrect",x:0,y:0,width:0,height:0,fill:"var(--sel)","fill-opacity":.12,stroke:"var(--sel)","stroke-dasharray":"4 3",display:"none"});
+  svg.setAttribute("aria-label",`Actogram with ${M.events.length} points, ${sel.size} selected`);
+}
+
+/* ---------- interaction on the plot ---------- */
+(function(){
+  const svg=$("#acto"), tip=$("#tip"), wrap=$("#plotwrap");
+  let drag=null;
+  function pt(ev){ const p=svg.createSVGPoint(); p.x=ev.clientX; p.y=ev.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); }
+  svg.addEventListener("pointerdown",ev=>{ if(ev.button!==0) return; const p=pt(ev); const g=ev.target.closest("[data-id]");
+    drag={x0:p.x,y0:p.y,id:g?g.getAttribute("data-id"):null,moved:false,remove:ev.altKey||S.dragMode==="remove"}; svg.setPointerCapture(ev.pointerId); tip.style.display="none"; });
+  svg.addEventListener("pointermove",ev=>{
+    if(drag){ const p=pt(ev); if(Math.hypot(p.x-drag.x0,p.y-drag.y0)>4) drag.moved=true;
+      if(drag.moved){ const r=$("#selrect"); r.setAttribute("display","inline"); r.setAttribute("x",Math.min(p.x,drag.x0)); r.setAttribute("y",Math.min(p.y,drag.y0)); r.setAttribute("width",Math.abs(p.x-drag.x0)); r.setAttribute("height",Math.abs(p.y-drag.y0)); r.setAttribute("stroke",drag.remove?"var(--mark)":"var(--sel)"); r.setAttribute("fill",drag.remove?"var(--mark)":"var(--sel)"); }
+      return; }
+    const g=ev.target.closest("[data-id]");
+    if(!g){ tip.style.display="none"; return; }
+    const e=M.events.find(x=>x.id===g.getAttribute("data-id")); if(!e) return;
+    const c=condAt(e.t);
+    let txt=`${e.kind==="peak"?"Peak":"Trough"} #${e.idx+1}: ${e.t.toFixed(2)} h`;
+    if(M.t0ms!==null) txt+=`, ${fmtLocal(hoursToMs(e.t),M.tz)}`;
+    if(c){ txt+=`, ${condLabel(c)} #${c.no}`; if(c.type==="LD") txt+=` (ZT ${mod(e.t-c.on,c.P).toFixed(2)} h)`; }
+    tip.textContent=txt; tip.style.display="block";
+    const wr=wrap.getBoundingClientRect(); let left=ev.clientX-wr.left+wrap.scrollLeft+12; const top=ev.clientY-wr.top+12;
+    tip.style.left=left+"px"; tip.style.top=top+"px";
+    const tw=tip.offsetWidth; if(left+tw>wrap.scrollLeft+wr.width) tip.style.left=Math.max(0,left-tw-24)+"px";
+  });
+  svg.addEventListener("pointerleave",()=>{ if(!drag) tip.style.display="none"; });
+  function end(ev){ if(!drag) return; const d=drag; drag=null; const r=$("#selrect"); if(r) r.setAttribute("display","none");
+    if(!d.moved){ if(d.id){ sel.has(d.id)?sel.delete(d.id):sel.add(d.id); update(); } return; }
+    const p=pt(ev); const x0=Math.min(p.x,d.x0), x1=Math.max(p.x,d.x0), y0=Math.min(p.y,d.y0), y1=Math.max(p.y,d.y0);
+    let ch=false;
+    for(const h of hitPts){ if(S.filter!=="both" && h.kind!==S.filter) continue;
+      if(h.x>=x0&&h.x<=x1&&h.y>=y0&&h.y<=y1){ if(d.remove){ if(sel.delete(h.id)) ch=true; } else if(!sel.has(h.id)){ sel.add(h.id); ch=true; } } }
+    if(ch) update();
+  }
+  svg.addEventListener("pointerup",end);
+  svg.addEventListener("pointercancel",()=>{ drag=null; const r=$("#selrect"); if(r) r.setAttribute("display","none"); });
+})();
+
+/* ---------- dial ---------- */
+function dial(g){
+  const c=g.c, S0=132, cx=66, cy=66, R=54;
+  const P2=a=>[cx+R*Math.sin(a*Math.PI/180), cy-R*Math.cos(a*Math.PI/180)];
+  const at=(a,rr)=>[cx+rr*Math.sin(a*Math.PI/180), cy-rr*Math.cos(a*Math.PI/180)];
+  const arc=(a0,a1,rr)=>{ const [x0,y0]=at(a0,rr),[x1,y1]=at(a1,rr); const large=(a1-a0)%360>180?1:0; return `M${x0},${y0} A${rr},${rr} 0 ${large} 1 ${x1},${y1}`; };
+  let s=`<svg viewBox="0 0 ${S0} ${S0}" width="132" height="132" role="img" aria-label="Phase dial">`;
+  s+=`<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="var(--rule)" stroke-width="1"/>`;
+  if(c.type==="LD"){ const la=c.L/c.P*360;
+    if(la>0 && la<360){ s+=`<path d="${arc(0,la,R)}" stroke="var(--light)" stroke-width="9" fill="none"/><path d="${arc(la,360,R)}" stroke="var(--dark)" stroke-width="9" fill="none"/>`; }
+    else s+=`<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${la>=360?"var(--light)":"var(--dark)"}" stroke-width="9"/>`;
+  } else s+=`<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${c.type==="LL"?"var(--light)":"var(--dark)"}" stroke-width="9"/>`;
+  for(const [a,t] of [[0,"0°"],[90,"90°"],[180,"180°"],[270,"270°"]]){ const [x,y]=at(a,R-24); s+=`<text x="${x}" y="${y+3.5}" text-anchor="middle" font-size="9" fill="var(--muted)">${t}</text>`; }
+  for(const k of ["trough","peak"]){ const o=g.kinds[k]; if(!o) continue; const col=k==="peak"?"var(--peak)":"var(--trough)";
+    for(const p of o.pts){ const [x,y]=at(p.ang,R-6); s+=k==="peak"?`<circle cx="${x}" cy="${y}" r="3" fill="${col}" stroke="var(--surface)" stroke-width=".8"/>`:`<circle cx="${x}" cy="${y}" r="2.6" fill="${col}" stroke="var(--surface)" stroke-width=".8"/>`; }
+    const ang = c.type==="LD"? o.mean : o.phase; if(ang===undefined||!isFinite(ang)) continue;
+    const len = c.type==="LD"? (R-14)*o.r : R-14;
+    const [x,y]=at(ang,len); s+=`<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="${col}" stroke-width="3" stroke-linecap="round"/>`;
+  }
+  s+=`<circle cx="${cx}" cy="${cy}" r="2.5" fill="var(--ink)"/></svg>`;
+  return s;
+}
+
+/* ---------- results ---------- */
+const KN={peak:"Peaks",trough:"Troughs"};
+function renderResults(){
+  const A=M.analysis, box=$("#results");
+  let h=`<h2>Phase results</h2>`;
+  const tsv=[];
+  tsv.push(["Condition","Condition start","Kind","N","Method","Period (h)","Phase (deg)","Phase (h)","SE phase (deg)","Mean vector r","Circular SD (deg)","R2","Reference (0 deg)","Reference time"].join("\t"));
+  const tsvPts=[["Condition","Kind","Event #","Time (h after 0 h)","Clock time","Cycle n","Time after reference / ZT (h)","Residual (h)","Phase (deg)"].join("\t")];
+  if(M.t0ms===null) h+=`<p class="warn">Enter the clock time of 0 h to place the light/dark conditions.</p>`;
+  if(!A.groups.length && !A.outside.peak.length && !A.outside.trough.length){
+    h+=`<p class="empty">No points selected yet. Click points in the actogram or drag a box around them; the phase for each condition appears here.</p>`;
+  }
+  for(const g of A.groups){ const c=g.c;
+    const startTxt = M.t0ms!==null? fmtLocal(c.ms,M.tz):"";
+    h+=`<div class="rescard"><div>${dial(g)}</div><div>`;
+    h+=`<h3>#${c.no} ${esc(condLabel(c))}</h3>`;
+    if(c.type==="LD"){
+      h+=`<div class="meta">Starts ${esc(startTxt)} (${c.s.toFixed(2)} h), begins with ${c.begins==="D"?"dark":"light"}. ZT0 = light-on; cycle length ${fmtH(c.P)} h.</div>`;
+      h+=`<div class="big">`;
+      for(const k of ["peak","trough"]){ const o=g.kinds[k]; if(!o) continue; h+=`<div class="${k==="peak"?"pk":"tr"}"><b>${o.mean.toFixed(1)}°</b><span>${KN[k]}: mean ZT ${o.meanZT.toFixed(2)} h, n = ${o.pts.length}</span></div>`; }
+      h+=`</div><div class="tbl"><table><tr><th>Kind</th><th>N</th><th>Mean phase (°)</th><th>Mean ZT (h)</th><th>r</th><th>Circular SD (°)</th></tr>`;
+      for(const k of ["peak","trough"]){ const o=g.kinds[k]; if(!o) continue;
+        h+=`<tr><td class="${k==="peak"?"pk":"tr"}">${KN[k]}</td><td>${o.pts.length}</td><td>${o.mean.toFixed(1)}</td><td>${o.meanZT.toFixed(2)}</td><td>${o.r.toFixed(3)}</td><td>${fmtH(o.sd,1)}</td></tr>`;
+        tsv.push([`#${c.no} ${condLabel(c)}`,startTxt,KN[k],o.pts.length,"Circular mean",c.P.toFixed(3),o.mean.toFixed(2),o.meanZT.toFixed(3),"",o.r.toFixed(4),isFinite(o.sd)?o.sd.toFixed(2):"","","Light-on (ZT0)",M.t0ms!==null?fmtLocal(hoursToMs(c.on),M.tz):""].join("\t"));
+      }
+      h+=`</table></div>`;
+      h+=`<details><summary>Each selected point</summary><div class="tbl"><table><tr><th>Kind</th><th>#</th><th>Time (h)</th><th>Clock time</th><th>LD cycle</th><th>ZT (h)</th><th>Phase (°)</th></tr>`;
+      for(const k of ["peak","trough"]){ const o=g.kinds[k]; if(!o) continue;
+        for(const p of o.pts){ const ct=M.t0ms!==null?fmtLocal(hoursToMs(p.e.t),M.tz):"";
+          h+=`<tr><td class="${k==="peak"?"pk":"tr"}">${KN[k].slice(0,-1)}</td><td>${p.e.idx+1}</td><td>${p.e.t.toFixed(2)}</td><td>${esc(ct)}</td><td>${p.cyc}</td><td>${p.zt.toFixed(2)}</td><td>${p.ang.toFixed(1)}</td></tr>`;
+          tsvPts.push([`#${c.no} ${condLabel(c)}`,KN[k].slice(0,-1),p.e.idx+1,p.e.t.toFixed(3),ct,p.cyc,p.zt.toFixed(3),"",p.ang.toFixed(2)].join("\t")); } }
+      h+=`</table></div></details>`;
+    } else {
+      const refTime = M.t0ms!==null? fmtLocal(hoursToMs(g.ref.t),M.tz):"";
+      h+=`<div class="meta">Starts ${esc(startTxt)} (${c.s.toFixed(2)} h). 0° = ${esc(g.ref.name)}: ${esc(refTime)} (${g.ref.t.toFixed(2)} h).</div>`;
+      h+=`<div class="big">`;
+      for(const k of ["peak","trough"]){ const o=g.kinds[k]; if(!o) continue;
+        if(o.fit) h+=`<div class="${k==="peak"?"pk":"tr"}"><b>${o.phase.toFixed(1)}°</b><span>${KN[k]}: τ = ${o.tau.toFixed(2)} h (${fmtHM(o.tau*60)}), n = ${o.pts.length}</span></div>`;
+        else h+=`<div class="${k==="peak"?"pk":"tr"}"><b>–</b><span>${KN[k]}: select points in at least 2 cycles</span></div>`;
+      }
+      h+=`</div>`;
+      for(const k of ["peak","trough"]){ const o=g.kinds[k]; if(o&&o.dup) h+=`<p class="warn">Two or more selected ${KN[k].toLowerCase()} fall in the same cycle. Check the cycle numbers below, or set the actogram period T closer to the free-running period.</p>`; }
+      h+=`<div class="tbl"><table><tr><th>Kind</th><th>N</th><th>Period τ (h)</th><th>± SE</th><th>Intercept b (h)</th><th>Phase (°)</th><th>± SE (°)</th><th>Phase (h)</th><th>Phase (CT)</th><th>R²</th></tr>`;
+      for(const k of ["peak","trough"]){ const o=g.kinds[k]; if(!o) continue;
+        if(o.fit){ const f=o.fit;
+          h+=`<tr><td class="${k==="peak"?"pk":"tr"}">${KN[k]}</td><td>${o.pts.length}</td><td>${o.tau.toFixed(3)}</td><td>${f.seSlope!==undefined?f.seSlope.toFixed(3):"–"}</td><td>${o.b.toFixed(2)}</td><td>${o.phase.toFixed(1)}</td><td>${o.sePhase!==undefined?o.sePhase.toFixed(1):"–"}</td><td>${o.phaseH.toFixed(2)}</td><td>${o.ct.toFixed(2)}</td><td>${f.r2.toFixed(4)}</td></tr>`;
+          tsv.push([`#${c.no} ${condLabel(c)}`,startTxt,KN[k],o.pts.length,"Linear regression",o.tau.toFixed(4),o.phase.toFixed(2),o.phaseH.toFixed(3),o.sePhase!==undefined?o.sePhase.toFixed(2):"","","",f.r2.toFixed(5),g.ref.name,refTime].join("\t"));
+        } else h+=`<tr><td class="${k==="peak"?"pk":"tr"}">${KN[k]}</td><td>${o.pts.length}</td><td colspan="8" style="text-align:left">Needs points in at least 2 different cycles.</td></tr>`;
+      }
+      h+=`</table></div>`;
+      h+=`<details><summary>Each selected point</summary><div class="tbl"><table><tr><th>Kind</th><th>#</th><th>Time (h)</th><th>Clock time</th><th>Cycle n</th><th>After ref. (h)</th><th>Residual (h)</th><th>Phase (°)</th></tr>`;
+      for(const k of ["peak","trough"]){ const o=g.kinds[k]; if(!o) continue;
+        for(const p of o.pts){ const ct=M.t0ms!==null?fmtLocal(hoursToMs(p.e.t),M.tz):"";
+          h+=`<tr><td class="${k==="peak"?"pk":"tr"}">${KN[k].slice(0,-1)}</td><td>${p.e.idx+1}</td><td>${p.e.t.toFixed(2)}</td><td>${esc(ct)}</td><td>${p.n}</td><td>${p.rel.toFixed(2)}</td><td>${isFinite(p.resid)?p.resid.toFixed(2):"–"}</td><td>${p.ang.toFixed(1)}</td></tr>`;
+          tsvPts.push([`#${c.no} ${condLabel(c)}`,KN[k].slice(0,-1),p.e.idx+1,p.e.t.toFixed(3),ct,p.n,p.rel.toFixed(3),isFinite(p.resid)?p.resid.toFixed(3):"",p.ang.toFixed(2)].join("\t")); } }
+      h+=`</table></div><p class="small">Point phase = position within its own fitted cycle: ((t − n·τ) mod τ) ÷ τ × 360°. Without a fit, T = ${fmtHM(S.Tmin)} is used.</p></details>`;
+    }
+    h+=`</div></div>`;
+  }
+  const no=A.outside.peak.length+A.outside.trough.length;
+  if(no) h+=`<p class="warn">${no} selected point${no>1?"s are":" is"} outside every light/dark condition and ${no>1?"are":"is"} not analysed.</p>`;
+  box.innerHTML=h;
+  $("#tsv").value=tsv.join("\n")+"\n\n"+tsvPts.join("\n");
+}
+
+/* ---------- quick selection by condition ---------- */
+function renderQuick(){
+  const q=$("#quick"); let h="";
+  for(const c of M.conds){
+    const ev=M.events.filter(e=>{ const cc=condAt(e.t); return cc===c; });
+    const np=ev.filter(e=>e.kind==="peak").length, nt=ev.length-np;
+    const sp=ev.filter(e=>e.kind==="peak"&&sel.has(e.id)).length, st=ev.filter(e=>e.kind==="trough"&&sel.has(e.id)).length;
+    h+=`<div class="row"><span class="lab"><b>#${c.no} ${esc(condLabel(c))}</b> <span class="small">${sp}/${np} peaks, ${st}/${nt} troughs selected</span></span>
+      <button data-q="${c.no}" data-k="peak">Select all peaks</button><button data-q="${c.no}" data-k="trough">Select all troughs</button><button data-q="${c.no}" data-k="none">Deselect</button></div>`;
+  }
+  q.innerHTML = h ? `<div class="small">Select by condition</div>`+h : "";
+}
+$("#quick").addEventListener("click",ev=>{ const b=ev.target.closest("button[data-q]"); if(!b) return;
+  const c=M.conds.find(x=>x.no===+b.dataset.q); if(!c) return; const k=b.dataset.k;
+  for(const e of M.events){ if(condAt(e.t)!==c) continue; if(k==="none") sel.delete(e.id); else if(e.kind===k) sel.add(e.id); }
+  update(); });
+
+/* ---------- condition editor ---------- */
+function renderConds(){
+  const box=$("#conds"); box.innerHTML="";
+  S.conds.forEach((c,i)=>{
+    const d=document.createElement("div"); d.className="cond";
+    d.innerHTML=`<div class="row">
+      <select data-c="type" aria-label="Condition ${i+1} type"><option>LD</option><option>LL</option><option>DD</option></select>
+      <span class="ld small">L</span><input class="ld" type="text" data-c="L" aria-label="Light duration" placeholder="12:00">
+      <span class="ld small">D</span><input class="ld" type="text" data-c="D" aria-label="Dark duration" placeholder="12:00">
+      <select class="ld" data-c="begins" aria-label="Begins with"><option value="L">Light first</option><option value="D">Dark first</option></select>
+</div>
+      <div class="row" style="margin-top:4px"><span class="small">Starts at</span><input type="datetime-local" data-c="start" aria-label="Start date and time"><button class="x" data-del="${i}" aria-label="Remove condition ${i+1}">×</button></div>`;
+    d.querySelectorAll("[data-c]").forEach(inp=>{ inp.value=c[inp.dataset.c]||""; inp.addEventListener("input",()=>{ c[inp.dataset.c]=inp.value; if(inp.dataset.c==="type") toggleLD(); update(); }); });
+    const toggleLD=()=>d.querySelectorAll(".ld").forEach(x=>x.style.display=c.type==="LD"?"":"none");
+    toggleLD();
+    box.appendChild(d);
+  });
+  box.querySelectorAll("[data-del]").forEach(b=>b.addEventListener("click",()=>{ S.conds.splice(+b.dataset.del,1); renderConds(); update(); }));
+  $("#addCond").disabled = S.conds.length>=6;
+}
+$("#addCond").addEventListener("click",()=>{
+  let start="";
+  const last=S.conds[S.conds.length-1];
+  if(last && last.start && M.t0ms!==null){ const ms=zonedToUtc(last.start,S.tz); if(ms!==null){ const p=parts(ms+7*864e5,S.tz); start=`${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`; } }
+  S.conds.push({type:"DD",L:"12:00",D:"12:00",begins:"L",start}); renderConds(); update(); });
+
+/* ---------- bind simple inputs ---------- */
+function syncInputs(){
+  document.querySelectorAll("[data-k]").forEach(inp=>{ const k=inp.dataset.k; if(inp.type==="checkbox") inp.checked=!!S[k]; else inp.value=S[k]??""; });
+  $("#Tstr").value=fmtHM(S.Tmin);
+  for(const [id,k] of [["#plotSeg","plot"],["#labelSeg","rowLabel"],["#dragSeg","dragMode"],["#filterSeg","filter"]])
+    document.querySelectorAll(id+" button").forEach(b=>b.setAttribute("aria-pressed", String(b.dataset.v===S[k])));
+  $("#day0CustomWrap").style.display=S.day0Mode==="custom"?"":"none";
+  $("#rowsManual").style.display=S.rowsAuto?"none":"";
+  $("#day0OffTxt").textContent=fmtHM(S.day0Off)+(S.day0Off?"":" (none)");
+}
+document.querySelectorAll("[data-k]").forEach(inp=>{
+  const ev = inp.tagName==="SELECT"||inp.type==="checkbox" ? "change" : "input";
+  inp.addEventListener(ev,()=>{ const k=inp.dataset.k; S[k]= inp.type==="checkbox"? inp.checked : (inp.hasAttribute("data-num")? (+inp.value||0) : inp.value);
+    if(k==="day0Mode") S.day0Off=0;
+    update(); });
+});
+for(const [id,k] of [["#plotSeg","plot"],["#labelSeg","rowLabel"],["#dragSeg","dragMode"],["#filterSeg","filter"]])
+  $(id).addEventListener("click",ev=>{ const b=ev.target.closest("button"); if(!b) return; S[k]=b.dataset.v; update(); });
+$("#Tstr").addEventListener("change",()=>{ const v=parseHM($("#Tstr").value); if(v>=10) S.Tmin=Math.round(v); update(); });
+$("#Treset").addEventListener("click",()=>{ S.Tmin=1440; update(); });
+document.querySelectorAll(".tune").forEach(box=>{
+  const k=box.dataset.tune;
+  for(const [lab,v] of [["−1 h",-60],["−10 min",-10],["−1 min",-1],["+1 min",1],["+10 min",10],["+1 h",60]]){
+    const b=document.createElement("button"); b.type="button"; b.textContent=lab;
+    let timer=null;
+    const step=()=>{ S[k]+=v; if(k==="Tmin") S.Tmin=Math.max(10,S.Tmin); update(); };
+    b.addEventListener("pointerdown",e=>{ e.preventDefault(); step(); timer=setTimeout(function rep(){ step(); timer=setTimeout(rep,70); },400); });
+    const stop=()=>{ clearTimeout(timer); timer=null; };
+    b.addEventListener("pointerup",stop); b.addEventListener("pointerleave",stop);
+    b.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); step(); } });
+    box.appendChild(b);
+  }
+});
+$("#clearSel").addEventListener("click",()=>{ sel.clear(); update(); });
+$("#loadEx").addEventListener("click",()=>{ Object.assign(S,{t0:EX.t0,tz:EX.tz,peaks:EX.peaks,troughs:EX.troughs,conds:JSON.parse(JSON.stringify(EX.conds)),day0Mode:"midnight",day0Off:0,Tmin:1440}); sel.clear(); renderConds(); update(); });
+$("#clearData").addEventListener("click",()=>{ S.peaks=""; S.troughs=""; sel.clear(); update(); });
+$("#copyTsv").addEventListener("click",async()=>{ const t=$("#tsv"); try{ await navigator.clipboard.writeText(t.value); $("#copyMsg").textContent="Copied."; }catch(e){ t.select(); try{ document.execCommand("copy"); $("#copyMsg").textContent="Copied."; }catch(e2){ $("#copyMsg").textContent="Select the text and press Ctrl+C (⌘C)."; } } });
+
+/* ---------- files ---------- */
+function download(name, blob){ const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },1000); }
+function csvCell(v){ v=String(v); return /[",\n]/.test(v)? '"'+v.replace(/"/g,'""')+'"' : v; }
+$("#dlCsv").addEventListener("click",()=>{ const txt=$("#tsv").value.split("\n").map(l=>l===""?"":l.split("\t").map(csvCell).join(",")).join("\r\n");
+  download("phase_results.csv", new Blob(["\ufeff"+txt],{type:"text/csv;charset=utf-8"})); });
+function svgString(){
+  const cs=getComputedStyle(document.documentElement);
+  const svg=$("#acto"); const vb=svg.getAttribute("viewBox").split(" ").map(Number);
+  let s=svg.outerHTML.replace(/<rect id="selrect"[^>]*><\/rect>|<rect id="selrect"[^>]*\/>/,"");
+  s=s.replace(/var\(--([a-z-]+)\)/g,(m,n)=>cs.getPropertyValue("--"+n).trim()||"#000");
+  s=s.replace(/^<svg /,`<svg width="${vb[2]}" height="${vb[3]}" font-family="Atkinson Hyperlegible, Segoe UI, Arial, sans-serif" `);
+  s=s.replace(/(<svg[^>]*>)/,`$1<rect x="0" y="0" width="${vb[2]}" height="${vb[3]}" fill="${cs.getPropertyValue("--surface").trim()}"/>`);
+  if(!/xmlns=/.test(s.slice(0,200))) s=s.replace(/^<svg /,'<svg xmlns="http://www.w3.org/2000/svg" ');
+  return {s, w:vb[2], h:vb[3]};
+}
+$("#dlSvg").addEventListener("click",()=>{ const {s}=svgString(); download("actogram.svg", new Blob([s],{type:"image/svg+xml"})); });
+$("#dlPng").addEventListener("click",()=>{ const {s,w,h}=svgString(); const img=new Image(); const url=URL.createObjectURL(new Blob([s],{type:"image/svg+xml"}));
+  img.onload=()=>{ const k=2, c=document.createElement("canvas"); c.width=w*k; c.height=h*k; const g=c.getContext("2d"); g.scale(k,k); g.drawImage(img,0,0); URL.revokeObjectURL(url); c.toBlob(b=>download("actogram.png",b),"image/png"); };
+  img.src=url; });
+$("#saveSet").addEventListener("click",()=>{ save(); const o=Object.assign({},S,{sel:[...sel]});
+  const out={t0:o.t0.replace("T"," "),tz:o.tz,peaks:o.peaks,troughs:o.troughs,conds:o.conds.map(c=>Object.assign({},c,{start:(c.start||"").replace("T"," ")})),
+    extend_first:o.extendFirst,day0_mode:o.day0Mode,day0_custom:(o.day0Custom||"").replace("T"," "),day0_off:o.day0Off,T_min:o.Tmin,plot:o.plot,row_label:o.rowLabel,
+    major:o.major,minor:o.minor,rows_auto:o.rowsAuto,r_min:o.rMin,r_max:o.rMax,show_fit:o.showFit,ref:o.ref,drag_mode:o.dragMode,filter:o.filter,sel:o.sel};
+  download("actogram_settings.json", new Blob([JSON.stringify(out,null,2)],{type:"application/json"})); });
+$("#openSet").addEventListener("click",()=>$("#openFile").click());
+$("#openFile").addEventListener("change",ev=>{ const f=ev.target.files[0]; if(!f) return; const r=new FileReader();
+  r.onload=()=>{ try{ const d=JSON.parse(r.result); const T=v=>(v||"").replace(" ","T");
+      const m={t0:T(d.t0),tz:d.tz,peaks:d.peaks,troughs:d.troughs,conds:(d.conds||[]).map(c=>Object.assign({type:"LD",L:"12:00",D:"12:00",begins:"L"},c,{start:T(c.start)})),
+        extendFirst:d.extend_first,day0Mode:d.day0_mode,day0Custom:T(d.day0_custom),day0Off:d.day0_off,Tmin:d.T_min,plot:d.plot,rowLabel:d.row_label,
+        major:d.major,minor:d.minor,rowsAuto:d.rows_auto,rMin:d.r_min,rMax:d.r_max,showFit:d.show_fit,ref:d.ref,dragMode:d.drag_mode,filter:d.filter};
+      for(const k in m) if(m[k]===undefined) delete m[k];
+      S=Object.assign(JSON.parse(JSON.stringify(DEF)),m); sel=new Set(d.sel||[]);
+      if(![...$("#tz").options].some(o=>o.value===S.tz)) $("#tz").add(new Option(S.tz,S.tz));
+      renderConds(); update(); }catch(e){ alert("This file could not be read as an Actogram Phase Analyzer settings file."); } ev.target.value=""; };
+  r.readAsText(f); });
+
+/* time zones */
+(function(){ const sel_=$("#tz"); let zones=[];
+  try{ zones=Intl.supportedValuesOf("timeZone"); }catch(e){}
+  if(!zones.length) zones=["UTC","America/New_York","America/Chicago","America/Denver","America/Los_Angeles","Europe/London","Europe/Berlin","Asia/Tokyo","Australia/Sydney"];
+  if(!zones.includes("UTC")) zones.unshift("UTC");
+  if(!zones.includes(S.tz)) zones.push(S.tz);
+  sel_.innerHTML=zones.map(z=>`<option value="${z}">${z.replace(/_/g," ")}</option>`).join("");
+})();
+
+function update(){
+  buildModel();
+  M.analysis=analyze();
+  syncInputs();
+  render();
+  renderQuick();
+  renderResults();
+  $("#selCount").textContent=`${sel.size} selected`;
+  save();
+}
+// default selection for a first look: none
+renderConds();
+update();
+})();
+</script>
+</body>
+</html>
