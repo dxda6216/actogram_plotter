@@ -4,7 +4,7 @@
 
 This is a very simple web app that plots rhythm peaks and troughs like an actogram. It draws a double‑plotted (or single‑plotted) actogram from peak and trough times of a rhythm, together with the light/dark conditions of the experiment. It does no rhythm analysis: you enter the times, it draws the figure.
 
-I wrote the core logic, and Claude assisted with the GUI, graphing details, and converting the Python code into the web application. Functions, such as automated detection for peaks and troughs in rhythms, period and phase analysis using linear regression, are not yet implemented.
+I wrote the core logic, and Claude assisted with the GUI, graphing details, and converting the Python code into the web application. Functions, such as automated detection for peaks and troughs in rhythms, are not yet implemented.
 
 The app runs entirely in your web browser from the link above. There is nothing to install and no account is needed.
 
