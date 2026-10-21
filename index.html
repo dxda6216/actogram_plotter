@@ -37,8 +37,8 @@ header img{width:48px;height:48px;flex:none}
 h1{font-size:1.6rem;font-weight:700;margin:0}
 header p{margin:0;color:var(--muted)}
 main{max-width:1640px;margin:0 auto;padding:14px 24px 40px;display:grid;
-  grid-template-columns:minmax(640px,700px) minmax(0,1fr);gap:22px;align-items:start}
-@media (max-width:1300px){ main{grid-template-columns:minmax(0,1fr)} }
+  grid-template-columns:minmax(400px,420px) minmax(0,1fr);gap:22px;align-items:start}
+@media (max-width:1000px){ main{grid-template-columns:minmax(0,1fr)} }
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
 .block + .block{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
 h2{font-size:1.02rem;font-weight:700;margin:0 0 8px}
@@ -72,7 +72,8 @@ button.primary{background:var(--ink);color:var(--surface);border-color:var(--ink
 .count.ok{color:var(--ok)} .count.bad{color:var(--bad)}
 /* date-time field */
 .dt{display:inline-flex;gap:4px;align-items:center}
-.dt input{width:13.6em;cursor:pointer}
+.dt input{width:10.2em;padding:4px 6px;cursor:pointer}
+.dt button{white-space:nowrap}
 .dt.compact input{width:10.4em;padding:4px 6px}
 .dt button{padding:4px 8px}
 /* wheel time field */
@@ -88,12 +89,24 @@ button.primary{background:var(--ink);color:var(--surface);border-color:var(--ink
 .ld-table .h{font-size:.8rem;color:var(--muted)}
 .ld-table [hidden]{display:none}
 .ld-body[hidden]{display:none}
+.ld-cards{display:flex;flex-direction:column;gap:8px}
+.ld-card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px}
+.ld-card[hidden],.ld-part[hidden]{display:none}
+.ld-r1,.ld-r2{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.ld-r1{flex-wrap:nowrap}
+.ld-card select{padding:4px 3px}
+.ld-card .tf input{width:3.9em;padding:4px 2px}
+.ld-r2{margin-top:6px}
+.ld-part{display:inline-flex;flex-wrap:nowrap;gap:5px;align-items:center}
+.ld-lab{font-size:.85rem;color:var(--muted)}
+.ld-card .tf input{cursor:pointer}
+.ld-del{margin-left:auto;padding:2px 9px;line-height:1.3}
 .radios{display:flex;flex-direction:column;gap:5px}
 /* plot settings */
-.pgrid{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:center}
+.pgrid{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 12px;align-items:center}
 .pgrid > label:first-child,.pgrid .k{color:var(--muted);font-size:.9rem}
 .pgrid #title{width:100%}
-.pgrid > .seg,.pgrid > select{justify-self:start}
+.pgrid > .seg,.pgrid > select{justify-self:start;max-width:100%}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
 .seg label{padding:4px 12px;cursor:pointer;background:var(--field)}
 .seg input{position:absolute;opacity:0;pointer-events:none}
@@ -106,18 +119,34 @@ button.primary{background:var(--ink);color:var(--surface);border-color:var(--ink
 .swatches span{margin-left:8px;font-size:.85rem;color:var(--muted)}
 /* chart */
 .paper-wrap{overflow:auto;border:1px solid var(--line);border-radius:8px;background:#fff;max-height:78vh}
-#chart{display:block;width:100%;min-width:720px;height:auto}
-.tune{margin-top:14px;border:1px solid var(--line);border-radius:8px;padding:12px 14px;background:var(--field)}
-.tune h3{font-size:.98rem;margin:0 0 8px}
-.adj + .adj{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
-.adj-label{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;font-weight:700;font-size:.92rem;margin-bottom:5px}
-.adj-val{font-weight:400;color:var(--info);font-variant-numeric:tabular-nums}
-.adj-ctrl{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.adj-ctrl button{padding:3px 9px;font-size:.86rem;background:var(--surface);touch-action:manipulation;user-select:none;-webkit-user-select:none}
-.adj-ctrl input[type=range]{flex:1 1 200px;min-width:140px;accent-color:var(--ink)}
-.adj-ctrl input[type=number]{width:6em;text-align:right}
+#chart{display:block;width:100%;min-width:640px;height:auto}
+.tune{margin:0 0 12px;border:1px solid var(--line);border-left:4px solid var(--disp-bar);border-radius:8px;padding:6px 10px 6px;background:var(--disp-bg)}
+.tune-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;margin-bottom:2px}
+.tune h3{font-size:.9rem;margin:0}
+.tune-head span{font-size:.68rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--disp)}
+.adj{display:flex;flex-wrap:wrap;align-items:center;gap:3px;margin-top:3px}
+.adj-name{font-weight:700;font-size:.85rem;width:5.6em}
+.adj-val{color:var(--info);font-size:.8rem;font-variant-numeric:tabular-nums;white-space:nowrap;margin-left:6px}
+.adj[data-key] .adj-val{min-width:16.5em}
+.adj button{padding:1px 6px;font-size:.78rem;background:var(--surface);touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.adj input[type=range]{flex:1 1 140px;min-width:100px;height:16px;margin:0 4px;accent-color:var(--ink)}
+.adj input[type=number]{width:5.2em;text-align:right;padding:1px 4px;font-size:.85rem}
+.adj-rows label{font-size:.85rem}
+.adj-rows .chk{margin-right:6px}
 #rowsNote{color:var(--bad);font-size:.85rem}
 .bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.ana{margin-top:14px;border:1px solid var(--line);border-radius:8px;padding:12px 14px;background:var(--disp-bg);border-left:4px solid var(--disp-bar)}
+.ana h3{font-size:.98rem;margin:0 0 8px}
+.ana-bar{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center}
+.ana-bar .k{color:var(--muted);font-size:.88rem}
+.ana-bar select{max-width:100%}
+.ana-wrap{overflow-x:auto;margin-top:8px}
+.ana-table{border-collapse:collapse;font-size:.84rem;font-variant-numeric:tabular-nums;background:var(--surface);min-width:100%}
+.ana-table th,.ana-table td{border:1px solid var(--line);padding:4px 7px;text-align:right;white-space:nowrap}
+.ana-table th{background:var(--field);text-align:center}
+.ana-table td.l{text-align:left}
+#chartHost svg{cursor:crosshair;touch-action:none}
+#chartHost .hit{cursor:pointer}
 #status{color:var(--muted);font-size:.86rem}
 .sr{position:absolute;left:-9999px}
 /* green tint = values that must match the experiment records; blue tint = view settings */
@@ -227,22 +256,17 @@ dialog::backdrop{background:rgba(10,15,25,.35)}
     </div>
 
     <div class="block">
-      <h2>Light/dark (LD) cycles</h2>
-      <label class="chk"><input type="checkbox" id="showLD">Show the LD cycles in the actogram</label>
+      <h2>Light/dark conditions</h2>
+      <label class="chk"><input type="checkbox" id="showLD">Show the light/dark conditions in the actogram</label>
       <div class="ld-body" id="ldBody">
         <div class="rec" data-tag="From your records · enter exactly">
-        <div class="ld-wrap"><div class="ld-table" id="ldTable">
-          <span class="h"></span><span class="h">Condition</span><span class="h">L (hh:mm)</span><span class="h">D (hh:mm)</span><span class="h">Starts at (click 📅 to pick)</span><span class="h">Begins with</span>
-        </div></div>
-        <div class="row" style="margin-top:8px">
-          <label for="nChanges">Number of changes</label>
-          <select id="nChanges"></select><span class="hint" style="margin:0">(0–5)</span>
+          <div class="ld-cards" id="ldCards"></div>
+          <button type="button" id="addCond" style="margin-top:8px">Add condition</button>
         </div>
-        </div>
-        <label class="chk" style="margin-top:8px"><input type="checkbox" id="extendBefore">Also draw the first cycle before its start time</label>
+        <label class="chk" style="margin-top:8px"><input type="checkbox" id="extendBefore">Extend the first condition before its start time</label>
         <p class="errs" id="ldErr"></p>
         <p class="info" id="ldInfo"></p>
-        <p class="hint">LD = light/dark cycle (L, D and the period it begins with are used), LL = constant light, DD = constant darkness. Each condition starts at its date/time and lasts until the next change. After an LD cycle, the start picker of the next condition lists the ends of D (for LL, or an LD cycle beginning with Light) or of L (for DD, or an LD cycle beginning with Dark).</p>
+        <p class="hint">LD uses L, D and the period it begins with; LL is constant light, DD constant darkness. Each condition lasts until the next one starts. Click L or D to pick the length with the mouse wheel. After an LD condition, the Starts at picker of the next one lists the ends of D (for LL, or LD with Light first) or of L (for DD, or LD with Dark first).</p>
       </div>
     </div>
 
@@ -284,6 +308,7 @@ dialog::backdrop{background:rgba(10,15,25,.35)}
           <label class="chk"><input type="checkbox" id="label_onsets">Label the start times of light and dark periods</label>
           <label class="chk"><input type="checkbox" id="label_row_starts">Label the start date/time of each cycle (y axis)</label>
           <label class="chk"><input type="checkbox" id="mark_times">Mark 0 h of the data (green *) and the sample placement (orange *)</label>
+          <label class="chk"><input type="checkbox" id="mark_changes">Mark condition changes (light-purple lines)</label>
         </div>
       </div>
     </div>
@@ -291,37 +316,63 @@ dialog::backdrop{background:rgba(10,15,25,.35)}
 
   <section class="panel" aria-labelledby="h-chart">
     <h2 id="h-chart" class="sr">Actogram</h2>
-    <div class="paper-wrap"><div id="chartHost"></div></div>
-    <div class="tune">
-      <h3>Fine-tune the plot (1-minute steps)</h3>
-      <div class="disp" data-tag="View settings · change freely">
+    <div class="tune" aria-label="Fine-tune the plot">
+      <div class="tune-head"><h3>Fine-tune the plot (1-minute steps)</h3><span>View settings · change freely</span></div>
       <div class="adj" data-key="origin">
-        <div class="adj-label">Actogram day 0, 0 h<span class="adj-val"></span></div>
-        <div class="adj-ctrl">
-          <button type="button" data-d="-60">−1 h</button><button type="button" data-d="-10">−10 min</button><button type="button" data-d="-1">−1 min</button>
-          <input type="range" min="-720" max="720" step="1" value="0" aria-label="Shift actogram day 0, 0 h, in minutes">
-          <button type="button" data-d="1">+1 min</button><button type="button" data-d="10">+10 min</button><button type="button" data-d="60">+1 h</button>
-        </div>
+        <span class="adj-name">Day 0, 0 h</span>
+        <button type="button" data-d="-60" title="−1 h">−1h</button><button type="button" data-d="-10" title="−10 min">−10</button><button type="button" data-d="-1" title="−1 min">−1</button>
+        <input type="range" min="-720" max="720" step="1" value="0" aria-label="Day 0, 0 h, in minutes">
+        <button type="button" data-d="1" title="+1 min">+1</button><button type="button" data-d="10" title="+10 min">+10</button><button type="button" data-d="60" title="+1 h">+1h</button>
+        <span class="adj-val"></span>
       </div>
       <div class="adj" data-key="period">
-        <div class="adj-label">Period T<span class="adj-val"></span></div>
-        <div class="adj-ctrl">
-          <button type="button" data-d="-60">−1 h</button><button type="button" data-d="-10">−10 min</button><button type="button" data-d="-1">−1 min</button>
-          <input type="range" min="1" max="14400" step="1" aria-label="Period T, in minutes">
-          <button type="button" data-d="1">+1 min</button><button type="button" data-d="10">+10 min</button><button type="button" data-d="60">+1 h</button>
-        </div>
+        <span class="adj-name">Period T</span>
+        <button type="button" data-d="-60" title="−1 h">−1h</button><button type="button" data-d="-10" title="−10 min">−10</button><button type="button" data-d="-1" title="−1 min">−1</button>
+        <input type="range" min="1" max="14400" step="1" aria-label="Period T, in minutes">
+        <button type="button" data-d="1" title="+1 min">+1</button><button type="button" data-d="10" title="+10 min">+10</button><button type="button" data-d="60" title="+1 h">+1h</button>
+        <span class="adj-val"></span>
       </div>
-      <div class="adj">
-        <div class="adj-label">Rows (cycles)<span class="adj-val" id="rowsInfo"></span></div>
-        <div class="adj-ctrl">
-          <label class="chk"><input type="checkbox" id="rows_auto">Automatic</label>
-          <label for="row_min">&nbsp;Min</label><input type="number" id="row_min" step="1" min="-9999" max="9999">
-          <label for="row_max">&nbsp;Max</label><input type="number" id="row_max" step="1" min="-9999" max="9999">
-          <span id="rowsNote"></span>
-        </div>
+      <div class="adj adj-rows">
+        <span class="adj-name">Rows</span>
+        <label class="chk"><input type="checkbox" id="rows_auto">Automatic</label>
+        <label for="row_min">Min</label><input type="number" id="row_min" step="1" min="-9999" max="9999">
+        <label for="row_max">Max</label><input type="number" id="row_max" step="1" min="-9999" max="9999">
+        <span class="adj-val" id="rowsInfo"></span>
+        <span id="rowsNote"></span>
       </div>
+    </div>
+    <div class="paper-wrap"><div id="chartHost"></div></div>
+    <div class="ana" id="anaPanel">
+      <h3>Phase analysis</h3>
+      <div class="ana-bar">
+        <span class="k">Drag to</span>
+        <div class="seg" role="radiogroup" aria-label="Drag to"><label><input type="radio" name="drag_mode" value="select">Select</label><label><input type="radio" name="drag_mode" value="deselect">Deselect</label></div>
+        <span class="k">Applies to</span>
+        <div class="seg" role="radiogroup" aria-label="Applies to"><label><input type="radio" name="sel_target" value="both">Both</label><label><input type="radio" name="sel_target" value="peaks">Peaks</label><label><input type="radio" name="sel_target" value="troughs">Troughs</label></div>
+        <button type="button" id="selAll">Select all</button>
+        <button type="button" id="selClear">Clear selection</button>
       </div>
-      <p class="hint">These controls change the view only; 0 h of the data is set in the left column. Hold a button to repeat. With a slider focused, each arrow key press moves it by 1 minute; the day 0, 0 h slider moves up to ±12 h from where you start. Shifting day 0, 0 h here switches it to “Another date/time”. Rows: untick Automatic to set the first (Min) and last (Max) row in whole cycles; negative values are allowed.</p>
+      <p class="hint" style="margin-top:6px">Click a point in the actogram to select or deselect it. Drag a box to select many at once; hold Alt (Option) while dragging to do the opposite. In the double plot each point appears twice; either copy works. <span id="selCount"></span></p>
+      <div class="ana-bar" style="margin-top:8px">
+        <label for="phaseRef" class="k">0° for LL and DD</label>
+        <select id="phaseRef">
+          <option value="zt0_prev">Projected light-on (ZT0) of the preceding LD condition</option>
+          <option value="start">Start of the condition</option>
+          <option value="zero">0 h of the data</option>
+          <option value="day0">Actogram day 0, 0 h</option>
+        </select>
+        <label class="chk"><input type="checkbox" id="draw_fit">Draw fitted lines (LD: mean phase, dotted black; LL/DD: regression)</label>
+      </div>
+      <p class="hint"><b>LD:</b> phase = ZT ÷ (L + D) × 360°, with ZT0 at light-on (circular mean of the selected points). <b>LL/DD:</b> the event time t (h after the 0° reference) is fitted as t = b + τ·n, where n is the cycle number (cycle 0 begins at the reference); the slope τ is the free-running period and the phase is (b mod τ) ÷ τ × 360°.</p>
+      <p class="info" id="anaNote"></p>
+      <div class="ana-wrap"><table class="ana-table" id="anaTable"></table></div>
+      <details style="margin-top:8px"><summary>Selected points</summary><div class="ana-wrap"><table class="ana-table" id="anaEvents"></table></div></details>
+      <div class="bar">
+        <button type="button" id="dlCsv" hidden>Download results (CSV)</button>
+        <button type="button" id="copyTsv">Copy results as tab-separated text</button>
+        <span id="anaStatus" class="hint" style="margin:0"></span>
+      </div>
+      <textarea id="tsvOut" class="mono" readonly rows="4" aria-label="Results as tab-separated text" style="min-height:0;margin-top:8px;font-size:.8rem"></textarea>
     </div>
     <div class="bar">
       <span id="saveFig" hidden><button type="button" id="savePng">Save as PNG</button> <button type="button" id="saveSvg">Save as SVG</button></span>
@@ -575,12 +626,14 @@ function exampleSettings(){
             {mode:'LL', L:'12:00', D:'12:00', start:'2026-10-16 14:00', phase:'Light'},
             blankCycle(), blankCycle(), blankCycle()],
     placed:'2026-10-04 13:27',
-    origin:'lights_on', origin_time:'', period:DEFAULT_PERIOD, rows_auto:true, title:EXAMPLE_TITLE
+    origin:'lights_on', origin_time:'', period:DEFAULT_PERIOD, rows_auto:true, title:EXAMPLE_TITLE,
+    sel_peaks:[...EXAMPLE_PEAKS], sel_troughs:[...EXAMPLE_TROUGHS]
   };
 }
 function defaultSettings(){
   return {...exampleSettings(), plot:'double', rowlab:'number', show_values:false, link_peak:false, link_trough:false,
-          row_min:0, row_max:5, label_onsets:false, label_row_starts:false, mark_times:true, x_major:X_MAJOR[3], x_minor:X_MINOR[0], light_color:LIGHT_COLORS[0][1], dark_color:DARK_COLORS[0][1]};
+          row_min:0, row_max:5, label_onsets:false, label_row_starts:false, mark_times:true, mark_changes:true, x_major:X_MAJOR[3], x_minor:X_MINOR[0], light_color:LIGHT_COLORS[0][1], dark_color:DARK_COLORS[0][1],
+          phase_ref:'zt0_prev', draw_fit:true, drag_mode:'select', sel_target:'both'};
 }
 function normalise(s){
   const d = Object.assign(defaultSettings(), s || {});
@@ -601,10 +654,15 @@ function normalise(s){
   d.t0 = String(d.t0||'').replace('T',' ');
   d.origin_time = String(d.origin_time||'').replace('T',' ');
   d.placed = String(d.placed||'').replace('T',' ');
-  d.mark_times = d.mark_times !== false;
+  d.mark_times = d.mark_times !== false; d.mark_changes = d.mark_changes !== false;
   if(!['clock','zero_midnight','lights_on','first_midnight','placed_midnight','custom'].includes(d.origin)) d.origin = 'lights_on';
   d.x_major = X_MAJOR[xMajorCount(d.x_major)]; d.x_minor = X_MINOR[xMinorCount(d.x_minor)];
   d.light_color = pickColor(d.light_color, LIGHT_COLORS); d.dark_color = pickColor(d.dark_color, DARK_COLORS);
+  for(const k of ['sel_peaks','sel_troughs']) d[k] = (Array.isArray(d[k]) ? d[k] : []).map(Number).filter(Number.isFinite);
+  if(!['zt0_prev','start','zero','day0'].includes(d.phase_ref)) d.phase_ref = 'zt0_prev';
+  d.draw_fit = d.draw_fit !== false;
+  if(!['select','deselect'].includes(d.drag_mode)) d.drag_mode = 'select';
+  if(!['both','peaks','troughs'].includes(d.sel_target)) d.sel_target = 'both';
   return d;
 }
 let state;
@@ -668,7 +726,7 @@ function compute(S){
     else{
       const segs = []; let prev = null;
       S.cycles.slice(0, 1 + S.n_changes).forEach((c, i) => {
-        const what = i === 0 ? 'First cycle' : `Change ${i}`;
+        const what = `Condition ${i + 1}`;
         let L, D, phase = c.phase;
         if(c.mode === 'LL'){ L = 24; D = 0; phase = 'Light'; }
         else if(c.mode === 'DD'){ L = 0; D = 24; phase = 'Dark'; }
@@ -689,7 +747,7 @@ function compute(S){
         const onset = lightOnsetOnDate(f.startMs, f.startsLight, f.L, f.D, res.tz);
         res.ld = {segs, extendBefore:!!S.extend_before, originHour:hours(onset), originLabel:fmtLocal(onset, res.tz)};
         res.ldInfo = segs.map((s, i) => {
-          const head = i === 0 ? 'First cycle' : `Change ${i}`;
+          const head = `Condition ${i + 1}`;
           return s.mode === 'LD'
             ? `${head}: L ${fmtDur(s.L)} / D ${fmtDur(s.D)} (T = ${fmtDur(s.L+s.D)}), ${s.startsLight?'light':'dark'} period starts at ${s.label} = ${g(s.startHour)} h`
             : `${head}: ${s.mode} from ${s.label} = ${g(s.startHour)} h`;
@@ -782,6 +840,99 @@ function linksOf(arr, T){
     if(best !== null) out.push([a[i], best]);
   }
   return out;
+}
+
+/* ---------------- phase analysis ---------------- */
+const k4 = v => (+v).toFixed(4);
+function selectedSets(S){ return {p:new Set(S.sel_peaks.map(k4)), t:new Set(S.sel_troughs.map(k4))}; }
+function condLabel(s, i){ return `Condition ${i + 1} · ${s.mode === 'LD' ? `LD ${fmtDur(s.L)}/${fmtDur(s.D)}` : s.mode}`; }
+function circMean(degs){
+  let c = 0, s = 0; for(const d of degs){ c += Math.cos(d*Math.PI/180); s += Math.sin(d*Math.PI/180); }
+  const n = degs.length, r = Math.hypot(c, s)/n;
+  return {mean:((Math.atan2(s, c)*180/Math.PI) + 360) % 360, sd: r > 0 ? Math.sqrt(-2*Math.log(Math.min(1, r)))*180/Math.PI : NaN, r};
+}
+// selected peaks/troughs -> phase per condition (LD: ZT; LL/DD: regression of time on cycle number)
+function analyze(S, res){
+  const out = {groups:[], events:[], note:''};
+  const sel = selectedSets(S);
+  const events = [];
+  for(const [kind, vals, set] of [['Peak', parseList(S.peaks).vals, sel.p], ['Trough', parseList(S.troughs).vals, sel.t]])
+    for(const h of vals) if(set.has(k4(h))) events.push({kind, h});
+  out.events = events.sort((a, b) => a.h - b.h);
+  if(!events.length){ out.note = 'Select peaks or troughs in the actogram to analyse their phase.'; return out; }
+  if(!res.ld){ out.note = 'Set valid light/dark conditions (and the clock time of 0 h) to analyse phases.'; return out; }
+  const segs = res.ld.segs;
+  for(const e of events){
+    e.seg = -1;
+    segs.forEach((s, i) => { const a = (i === 0 && res.ld.extendBefore) ? -Infinity : s.startHour, b = i + 1 < segs.length ? segs[i+1].startHour : Infinity;
+      if(e.h >= a && e.h < b) e.seg = i; });
+  }
+  const notes = [];
+  if(events.some(e => e.seg < 0)) notes.push('Points before the first condition are not analysed.');
+  for(let i = 0; i < segs.length; i++){
+    const s = segs[i];
+    for(const kind of ['Peak', 'Trough']){
+      const ev = events.filter(e => e.seg === i && e.kind === kind);
+      if(!ev.length) continue;
+      const g = {seg:i, label:condLabel(s, i), kind, mode:s.mode, n:ev.length, events:ev};
+      if(s.mode === 'LD'){
+        const P = s.L + s.D, on = s.startsLight ? s.startHour : s.startHour + s.D;
+        for(const e of ev){ e.zt = ((e.h - on) % P + P) % P; e.phase = e.zt/P*360; e.cycle = Math.floor((e.h - on)/P + 1e-9); }
+        const cm = circMean(ev.map(e => e.phase));
+        Object.assign(g, {period:P, phaseDeg:cm.mean, phaseH:cm.mean/360*P, sd:cm.sd, ref:'light-on (ZT0)', on,
+          from:(i === 0 && res.ld.extendBefore) ? -Infinity : s.startHour, to:i + 1 < segs.length ? segs[i+1].startHour : Infinity});
+      }else{
+        // 0° reference
+        let R = s.startHour, refName = 'start of the condition', P0 = 24;
+        let prev = null; for(let j = i - 1; j >= 0; j--) if(segs[j].mode === 'LD' && segs[j].L > 0){ prev = segs[j]; break; }
+        if(prev) P0 = prev.L + prev.D;
+        if(S.phase_ref === 'zt0_prev'){
+          if(prev){ const on0 = prev.startsLight ? prev.startHour : prev.startHour + prev.D;
+            R = on0 + Math.floor((s.startHour - on0)/P0 + 1e-9)*P0; refName = 'projected ZT0 of the preceding LD'; }
+          else notes.push(`${g.label}: no preceding LD condition, so its start is used as 0°.`);
+        }else if(S.phase_ref === 'zero'){ R = 0; refName = '0 h of the data'; }
+        else if(S.phase_ref === 'day0'){ R = res.origin.hour; refName = 'actogram day 0, 0 h'; }
+        // cycle numbers: cycle 0 begins at the reference; gaps of about one period add one cycle
+        let n = Math.floor((ev[0].h - R)/P0 + 1e-9);
+        ev.forEach((e, k) => { if(k) n += Math.max(1, Math.round((e.h - ev[k-1].h)/P0)); e.cycle = n; e.t = e.h - R; });
+        Object.assign(g, {ref:refName, R});
+        if(ev.length >= 2){
+          const N = ev.length, xs = ev.map(e => e.cycle), ys = ev.map(e => e.t);
+          const mx = xs.reduce((a, b) => a + b)/N, my = ys.reduce((a, b) => a + b)/N;
+          let sxx = 0, sxy = 0, syy = 0; xs.forEach((x, k) => { sxx += (x-mx)**2; sxy += (x-mx)*(ys[k]-my); syy += (ys[k]-my)**2; });
+          if(sxx > 0){
+            const tau = sxy/sxx, b = my - tau*mx;
+            const ssr = ys.reduce((a, y, k) => a + (y - (b + tau*xs[k]))**2, 0);
+            const se = N > 2 ? Math.sqrt(ssr/(N - 2)/sxx) : NaN;
+            const ph = ((b % tau) + tau) % tau;
+            ev.forEach(e => { e.fit = b + tau*e.cycle; e.resid = e.t - e.fit; });
+            Object.assign(g, {period:tau, se, r2: syy > 0 ? 1 - ssr/syy : 1, b, phaseH:ph, phaseDeg:ph/tau*360});
+          }else g.fitNote = 'all points in one cycle';
+        }else g.fitNote = 'needs at least 2 points';
+      }
+      out.groups.push(g);
+    }
+  }
+  out.note = notes.join(' ');
+  return out;
+}
+const f2 = v => Number.isFinite(v) ? v.toFixed(2) : '–';
+const f1 = v => Number.isFinite(v) ? v.toFixed(1) : '–';
+function resultRows(ana){
+  const head = ['Condition', 'Type', 'n', 'Period (h)', 'Period SE (h)', 'R²', 'Phase (°)', 'Phase (h)', 'Phase SD (°)', '0° reference'];
+  const rows = ana.groups.map(g => [g.label, g.kind + 's', g.n, f2(g.period), g.mode === 'LD' ? '' : f2(g.se), g.mode === 'LD' ? '' : (Number.isFinite(g.r2) ? g.r2.toFixed(3) : '–'),
+    f1(g.phaseDeg), f2(g.phaseH), g.mode === 'LD' ? f1(g.sd) : '', g.ref + (g.fitNote ? ` (${g.fitNote})` : '')]);
+  return [head, ...rows];
+}
+function eventRows(ana, res){
+  const head = ['Type', 'Time (h)', 'Local date/time', 'Condition', 'Cycle', 'ZT or t from 0° (h)', 'Phase (°)', 'Residual (h)'];
+  const rows = ana.events.map(e => {
+    const g = ana.groups.find(x => x.events.includes(e));
+    const when = res.zero !== undefined ? fmtLocal(res.zero + Math.round(e.h*60)*60000, res.tz) : '';
+    const ph = e.zt !== undefined ? e.phase : (g && Number.isFinite(g.period) ? (((e.t % g.period) + g.period) % g.period)/g.period*360 : NaN);
+    return [e.kind, e.h.toFixed(2), when, g ? g.label : 'no condition', e.cycle ?? '', f2(e.zt !== undefined ? e.zt : e.t), f1(ph), e.resid !== undefined ? f2(e.resid) : ''];
+  });
+  return [head, ...rows];
 }
 
 /* ---------------- chart (SVG) ---------------- */
@@ -909,21 +1060,70 @@ function buildSVG(S, res){
     }
   }
 
-  // points (double plot: also at x + T in the row above)
+  // condition changes: thin light-purple line at each start of LD, LL or DD
+  const CHANGE = '#b39ddb';
+  if(ld && S.mark_changes){
+    for(const sg of ld.segs){
+      const day = Math.floor((sg.startHour - o)/T + 1e-9), x = sg.startHour - o - day*T, spots = [];
+      if(day >= firstRow && day <= lastRow) spots.push([x, day]);
+      if(dbl && day - 1 >= firstRow && day - 1 <= lastRow) spots.push([x + T, day - 1]);
+      for(const [xx, yy] of spots)
+        out.push(`<line x1="${X(xx).toFixed(2)}" x2="${X(xx).toFixed(2)}" y1="${Y(yy - 0.5).toFixed(2)}" y2="${Y(yy + 0.5).toFixed(2)}" stroke="${CHANGE}" stroke-width="1.6"/>`);
+    }
+  }
+
+  // fitted lines: mean phase in LD (thin black dotted), regression in LL/DD (dashed, colour of the type)
+  const seg2 = (h1, h2, style) => {
+    for(let r = firstRow; r <= lastRow; r++){
+      const x1 = h1 - o - r*T; if(x1 < 0 || x1 >= span) continue;
+      out.push(`<line x1="${X(x1).toFixed(2)}" y1="${Y(r).toFixed(2)}" x2="${X(x1 + (h2 - h1) - T).toFixed(2)}" y2="${Y(r+1).toFixed(2)}" ${style}/>`);
+    }
+  };
+  if(S.draw_fit){
+    const ana = analyze(S, res);
+    out.push(`<g clip-path="url(#pc)">`);
+    const lo = o + (firstRow - 1)*T, hi = o + (lastRow + 2)*T;
+    for(const g2 of ana.groups){
+      if(g2.mode !== 'LD' || !Number.isFinite(g2.phaseH)) continue;
+      const P = g2.period, base = g2.on + g2.phaseH, a = Math.max(g2.from, lo), b = Math.min(g2.to, hi);
+      for(let nn = Math.ceil((a - base)/P - 1e-9); base + (nn + 1)*P < b + 1e-9; nn++)
+        seg2(base + nn*P, base + (nn + 1)*P, 'stroke="#111" stroke-width="0.9" stroke-dasharray="1.5 2.5"');
+    }
+    for(const g2 of ana.groups){
+      if(g2.mode === 'LD' || !Number.isFinite(g2.period)) continue;
+      const col = g2.kind === 'Peak' ? PEAK : TROUGH;
+      const n0 = Math.min(...g2.events.map(e => e.cycle)), n1 = Math.max(...g2.events.map(e => e.cycle));
+      for(let nn = n0; nn < n1; nn++){
+        const h1 = g2.R + g2.b + g2.period*nn, h2 = h1 + g2.period;
+        for(let r = firstRow; r <= lastRow; r++){
+          const x1 = h1 - o - r*T; if(x1 < 0 || x1 >= span) continue;
+          out.push(`<line x1="${X(x1).toFixed(2)}" y1="${Y(r).toFixed(2)}" x2="${X(x1 + (h2 - h1) - T).toFixed(2)}" y2="${Y(r+1).toFixed(2)}" stroke="${col}" stroke-width="1.4" stroke-dasharray="5 3" opacity="0.8"/>`);
+        }
+      }
+    }
+    out.push(`</g>`);
+  }
+
+  // points (double plot: also at x + T in the row above); clickable, selected ones ringed
   const rad = Math.max(1.6, Math.min(4, rh*0.32));
-  for(const [vals, col] of [[peaks, PEAK], [troughs, TROUGH]]){
+  const selSets = selectedSets(S), hits = [];
+  for(const [vals, col, kk] of [[peaks, PEAK, 'p'], [troughs, TROUGH, 't']]){
     for(const h of vals){
+      const isSel = (kk === 'p' ? selSets.p : selSets.t).has(k4(h));
       const day = Math.floor((h - o)/T), x = h - o - day*T;
       const pts = [];
       if(day >= firstRow && day <= lastRow) pts.push([x, day]);
       if(dbl && day - 1 >= firstRow && day - 1 <= lastRow) pts.push([x + T, day - 1]);
       for(const [px, pr] of pts){
         out.push(`<circle cx="${X(px).toFixed(2)}" cy="${Y(pr).toFixed(2)}" r="${rad.toFixed(2)}" fill="${col}"/>`);
+        if(isSel) out.push(`<circle cx="${X(px).toFixed(2)}" cy="${Y(pr).toFixed(2)}" r="${(rad + 2.6).toFixed(2)}" fill="none" stroke="#111" stroke-width="1.3"/>`);
+        hits.push(`<circle class="hit" data-k="${kk}" data-v="${h}" cx="${X(px).toFixed(2)}" cy="${Y(pr).toFixed(2)}" r="${Math.max(6, rad + 3).toFixed(2)}" fill="transparent"/>`);
         if(S.show_values) out.push(`<text x="${X(px + 0.02*T).toFixed(2)}" y="${(Y(pr) - 4).toFixed(2)}" font-size="7.5" fill="${col}">${h.toFixed(1)}</text>`);
       }
     }
   }
   out.push(...markSvg);                          // asterisks on top of the points
+  out.push(...hits);                             // invisible targets for clicking points
   if(!all.length) out.push(`<text x="${ml + plotW/2}" y="${(plotTop + plotH/2 + 5).toFixed(1)}" font-size="14" fill="#666" text-anchor="middle">Paste peak and trough times to plot them</text>`);
 
   // legend
@@ -933,11 +1133,13 @@ function buildSVG(S, res){
     items.push(['box', LIGHT, multi ? 'Light (L)' : `Light (L ${fmtDur(f.L)})`, 1]);
     items.push(['box', DARK, multi ? 'Dark (D)' : `Dark (D ${fmtDur(f.D)})`, 1]); }
   items.push(...markItems);
+  if(ld && S.mark_changes) items.push(['vline', CHANGE, 'Condition change']);
   out.push(`<rect x="${lx-8}" y="${ly-6}" width="${mr-26}" height="${items.length*20+8}" fill="#fff" stroke="#ccc" rx="3"/>`);
   for(const [kind, col, lab, op] of items){
     ly += 14;
     out.push(kind === 'dot' ? `<circle cx="${lx+6}" cy="${ly-4}" r="4" fill="${col}"/>`
            : kind === 'star' ? asterisk(lx+6, ly-4, 4.6, col)
+           : kind === 'vline' ? `<line x1="${lx+6}" x2="${lx+6}" y1="${ly-11}" y2="${ly+1}" stroke="${col}" stroke-width="2"/>`
                             : `<rect x="${lx}" y="${ly-10}" width="13" height="11" fill="${col}" fill-opacity="${op}" stroke="#999" stroke-width="0.5"/>`);
     out.push(`<text x="${lx+20}" y="${ly}" font-size="11.5" fill="${C.ink}">${esc(lab)}</text>`);
     ly += 6;
@@ -957,12 +1159,20 @@ function buildSVG(S, res){
 class TimeField {
   // the hour column runs from minHour to hours - 1 and wraps; optional min/max of the value in minutes
   constructor(input, opts){
-    Object.assign(this, {hours:100, minHour:0, maxMin:null, minMin:null, def:[12,0], onChange:()=>{}}, opts);
+    Object.assign(this, {hours:100, minHour:0, maxMin:null, minMin:null, def:[12,0], button:true, onChange:()=>{}}, opts);
     this.input = input; this.pop = null; this.acc = 0;
-    const btn = this.btn = document.createElement('button');
-    btn.type = 'button'; btn.textContent = '◷'; btn.title = 'Pick with the mouse (Alt+↓)';
-    btn.setAttribute('aria-label', 'Pick hours and minutes');
-    input.after(btn);
+    let btn = null;
+    if(this.button !== false){
+      btn = document.createElement('button');
+      btn.type = 'button'; btn.textContent = '◷'; btn.title = 'Pick with the mouse (Alt+↓)';
+      btn.setAttribute('aria-label', 'Pick hours and minutes');
+      input.after(btn);
+      btn.addEventListener('click', () => this.pop ? this.close() : this.open());
+    }else{
+      input.title = 'Click to pick with the mouse wheel';
+      input.addEventListener('click', () => { if(!this.pop) this.open(); });
+    }
+    this.btn = btn;
     input.autocomplete = 'off';
     input.addEventListener('input', () => this.onChange(input.value));
     input.addEventListener('blur', () => this.normalise());
@@ -971,9 +1181,8 @@ class TimeField {
       else if((e.altKey && e.key === 'ArrowDown') || e.key === 'F4'){ e.preventDefault(); this.open(); }
       else if(e.key === 'Enter') this.normalise();
     });
-    btn.addEventListener('click', () => this.pop ? this.close() : this.open());
   }
-  setDisabled(off){ this.input.disabled = off; this.btn.disabled = off; if(off) this.close(); }
+  setDisabled(off){ this.input.disabled = off; if(this.btn) this.btn.disabled = off; if(off) this.close(); }
   count(k){ return k === 'hour' ? this.hours - this.minHour : 60; }
   value(){
     const m = /^\s*(\d{1,3})\s*:?\s*(\d{2})\s*$/.exec(this.input.value); if(!m) return null;
@@ -1317,45 +1526,55 @@ $('clearAll').addEventListener('click', async () => {
   if(!await ask('⚠ Clear all data and dates?', 'Peaks and troughs, the clock time of 0 h, the sample placement and every LD start date are cleared. The first cycle is reset to LD 12:00 / 12:00 and Change 1 to LL. Display options are kept. This cannot be undone.')) return;
   const cycles = Array.from({length:MAX_CHANGES+1}, blankCycle);
   cycles[1].mode = 'LL';
-  Object.assign(state, {peaks:'', troughs:'', t0:'', placed:'', cycles, n_changes:1});
+  Object.assign(state, {peaks:'', troughs:'', t0:'', placed:'', cycles, n_changes:1, sel_peaks:[], sel_troughs:[]});
   if(state.title.trim() === EXAMPLE_TITLE) state.title = '';
   state = normalise(state); loadAll();
 });
 $('clearData').addEventListener('click', async () => {
   if(!state.peaks.trim() && !state.troughs.trim()) return;
   if(!await ask('Clear all peak and trough values?', 'The clock time of 0 h and the LD cycles are kept.')) return;
-  state.peaks = ''; state.troughs = '';
+  state.peaks = ''; state.troughs = ''; state.sel_peaks = []; state.sel_troughs = [];
   if(state.title.trim() === EXAMPLE_TITLE) state.title = '';
   loadAll();
 });
 
-// LD table
-const ldTable = $('ldTable'), cycleRows = [];
+// light/dark conditions: one card per condition
+const ldCards = $('ldCards'), cycleRows = [];
+const el = (tag, cls, text) => { const e = document.createElement(tag); if(cls) e.className = cls; if(text) e.textContent = text; return e; };
 for(let i = 0; i <= MAX_CHANGES; i++){
-  const name = i === 0 ? 'First' : `Change ${i}`;
-  const lab = document.createElement('span'); lab.textContent = name;
-  const mode = document.createElement('select'); ['LD','LL','DD'].forEach(m => mode.add(new Option(m, m)));
+  const name = `Condition ${i + 1}`;
+  const card = el('div', 'ld-card'), r1 = el('div', 'ld-r1'), r2 = el('div', 'ld-r2');
+  const mode = el('select'); ['LD','LL','DD'].forEach(m => mode.add(new Option(m, m)));
   mode.setAttribute('aria-label', `${name}: condition`);
-  const mk = key => { const w = document.createElement('span'); w.className = 'tf'; const inp = document.createElement('input');
-    inp.type = 'text'; inp.className = 'mono'; inp.inputMode = 'numeric'; inp.setAttribute('aria-label', `${name}: ${key} (hh:mm)`);
-    w.append(inp); return [w, inp]; };
+  const ldPart = el('span', 'ld-part');
+  const mk = key => { const w = el('span', 'tf'), inp = el('input', 'mono');
+    inp.type = 'text'; inp.inputMode = 'numeric'; inp.setAttribute('aria-label', `${name}: ${key} (hh:mm)`); w.append(inp); return [w, inp]; };
   const [lWrap, lIn] = mk('L'), [dWrap, dIn] = mk('D');
-  const startHost = document.createElement('span');
-  const phase = document.createElement('select'); phase.add(new Option('Light','Light')); phase.add(new Option('Dark','Dark'));
+  const phase = el('select'); phase.add(new Option('Light first', 'Light')); phase.add(new Option('Dark first', 'Dark'));
   phase.setAttribute('aria-label', `${name}: begins with`);
-  ldTable.append(lab, mode, lWrap, dWrap, startHost, phase);
+  ldPart.append(el('span', 'ld-lab', 'L'), lWrap, el('span', 'ld-lab', 'D'), dWrap, phase);
+  r1.append(mode, ldPart);
+  const startHost = el('span');
+  const del = el('button', 'ld-del', '×'); del.type = 'button'; del.setAttribute('aria-label', `Remove ${name.toLowerCase()}`); del.title = 'Remove this condition';
+  r2.append(el('span', 'ld-lab', 'Starts at'), startHost, del);
+  card.append(r1, r2); ldCards.append(card);
   const c = () => state.cycles[i];
-  const tfL = new TimeField(lIn, {hours:100, def:[12,0], onChange:v => { c().L = v; lIn.setAttribute('aria-invalid', tfL.value() ? 'false' : 'true'); changed(); }});
-  const tfD = new TimeField(dIn, {hours:100, def:[12,0], onChange:v => { c().D = v; dIn.setAttribute('aria-invalid', tfD.value() ? 'false' : 'true'); changed(); }});
-  const dt = makeDTField(startHost, {get:() => c().start, set:v => { c().start = v; changed(); }, compact:true,
-    title:`${i === 0 ? 'First cycle' : 'Change ' + i} – start`, suggestions: i > 0 ? () => startSuggestions(i) : null});
-  dtFields.push(dt);
+  const tfL = new TimeField(lIn, {hours:100, def:[12,0], button:false, onChange:v => { c().L = v; lIn.setAttribute('aria-invalid', tfL.value() ? 'false' : 'true'); changed(); }});
+  const tfD = new TimeField(dIn, {hours:100, def:[12,0], button:false, onChange:v => { c().D = v; dIn.setAttribute('aria-invalid', tfD.value() ? 'false' : 'true'); changed(); }});
+  dtFields.push(makeDTField(startHost, {get:() => c().start, set:v => { c().start = v; changed(); }, compact:true,
+    title:`${name} – start`, suggestions: () => i > 0 ? startSuggestions(i) : null}));
   mode.addEventListener('change', () => { c().mode = mode.value; changed(); });
   phase.addEventListener('change', () => { c().phase = phase.value; changed(); });
-  cycleRows.push({els:[lab, mode, lWrap, dWrap, startHost, phase], mode, phase, lIn, dIn, tfL, tfD});
+  del.addEventListener('click', () => {                    // remove this condition; the later ones move up
+    if(state.n_changes < 1) return;
+    state.cycles.splice(i, 1); state.cycles.push(blankCycle()); state.n_changes -= 1; changed(true);
+  });
+  cycleRows.push({card, mode, phase, ldPart, lIn, dIn, tfL, tfD, del});
 }
-for(let n = 0; n <= MAX_CHANGES; n++) $('nChanges').add(new Option(n, n));
-$('nChanges').addEventListener('change', () => { state.n_changes = +$('nChanges').value; changed(); });
+$('addCond').addEventListener('click', () => {
+  if(state.n_changes >= MAX_CHANGES) return;
+  state.n_changes += 1; state.cycles[state.n_changes] = blankCycle(); changed(true);
+});
 $('showLD').addEventListener('change', () => { state.show_ld = $('showLD').checked; changed(); });
 $('extendBefore').addEventListener('change', () => { state.extend_before = $('extendBefore').checked; changed(); });
 
@@ -1394,7 +1613,7 @@ function syncSwatches(){
 }
 $('xMajor').addEventListener('change', () => { state.x_major = $('xMajor').value; changed(); });
 $('xMinor').addEventListener('change', () => { state.x_minor = $('xMinor').value; changed(); });
-for(const id of ['show_values','link_peak','link_trough','label_onsets','label_row_starts','mark_times'])
+for(const id of ['show_values','link_peak','link_trough','label_onsets','label_row_starts','mark_times','mark_changes'])
   $(id).addEventListener('change', () => { state[id] = $(id).checked; changed(); });
 
 // rows
@@ -1410,13 +1629,104 @@ for(const id of ['row_min','row_max']){
     const v = (parseInt(el.value, 10) || 0) + (e.deltaY < 0 ? 1 : -1); el.value = Math.max(-9999, Math.min(9999, v)); state[id] = el.value; changed(); }, {passive:false});
 }
 
+/* ---------------- phase analysis: selection and results ---------------- */
+for(const nm of ['drag_mode','sel_target'])
+  document.querySelectorAll(`input[name=${nm}]`).forEach(r => r.addEventListener('change', () => { state[nm] = r.value; save(); }));
+$('phaseRef').addEventListener('change', () => { state.phase_ref = $('phaseRef').value; changed(); });
+$('draw_fit').addEventListener('change', () => { state.draw_fit = $('draw_fit').checked; changed(); });
+const selKey = kk => kk === 'p' ? 'sel_peaks' : 'sel_troughs';
+function isSel(kk, v){ return state[selKey(kk)].some(x => k4(x) === k4(v)); }
+function setSel(kk, v, on){
+  const key = selKey(kk);
+  if(on){ if(!isSel(kk, v)) state[key].push(+v); }
+  else state[key] = state[key].filter(x => k4(x) !== k4(v));
+}
+const targetKinds = () => state.sel_target === 'peaks' ? ['p'] : state.sel_target === 'troughs' ? ['t'] : ['p', 't'];
+$('selAll').addEventListener('click', () => {
+  for(const kk of targetKinds()) state[selKey(kk)] = [...parseList(kk === 'p' ? state.peaks : state.troughs).vals];
+  changed();
+});
+$('selClear').addEventListener('click', () => { for(const kk of targetKinds()) state[selKey(kk)] = []; changed(); });
+// click a point to toggle it; drag a box to select (Alt: deselect) several
+const chartHost = $('chartHost');
+let drag = null;
+const svgPoint = (svg, e) => { const p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); };
+chartHost.addEventListener('pointerdown', e => {
+  const svg = $('chart'); if(!svg || e.button !== 0) return;
+  const p = svgPoint(svg, e);
+  drag = {x0:p.x, y0:p.y, x1:p.x, y1:p.y, sx:e.clientX, sy:e.clientY, moved:false, alt:e.altKey, target:e.target, rect:null};
+  try{ chartHost.setPointerCapture(e.pointerId); }catch(_){}
+  e.preventDefault();
+});
+chartHost.addEventListener('pointermove', e => {
+  if(!drag) return;
+  const svg = $('chart'); if(!svg) return;
+  if(!drag.moved && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) < 4) return;
+  drag.moved = true;
+  const p = svgPoint(svg, e); drag.x1 = p.x; drag.y1 = p.y;
+  if(!drag.rect){
+    drag.rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    drag.rect.setAttribute('fill', 'rgba(31,79,209,0.08)'); drag.rect.setAttribute('stroke', '#1f4fd1'); drag.rect.setAttribute('stroke-dasharray', '4 3');
+    svg.append(drag.rect);
+  }
+  drag.rect.setAttribute('x', Math.min(drag.x0, drag.x1)); drag.rect.setAttribute('y', Math.min(drag.y0, drag.y1));
+  drag.rect.setAttribute('width', Math.abs(drag.x1 - drag.x0)); drag.rect.setAttribute('height', Math.abs(drag.y1 - drag.y0));
+});
+function endDrag(e){
+  if(!drag) return;
+  const d = drag; drag = null;
+  if(!d.moved){
+    const t = d.target;
+    if(t && t.classList && t.classList.contains('hit')){ setSel(t.dataset.k, +t.dataset.v, !isSel(t.dataset.k, +t.dataset.v)); changed(); }
+    return;
+  }
+  if(d.rect) d.rect.remove();
+  const svg = $('chart'); if(!svg) return;
+  const xa = Math.min(d.x0, d.x1), xb = Math.max(d.x0, d.x1), ya = Math.min(d.y0, d.y1), yb = Math.max(d.y0, d.y1);
+  const on = (state.drag_mode === 'select') !== (d.alt || (e && e.altKey));
+  const kinds = targetKinds();
+  let n = 0;
+  svg.querySelectorAll('.hit').forEach(c => {
+    const cx = +c.getAttribute('cx'), cy = +c.getAttribute('cy');
+    if(cx >= xa && cx <= xb && cy >= ya && cy <= yb && kinds.includes(c.dataset.k)){ setSel(c.dataset.k, +c.dataset.v, on); n++; }
+  });
+  if(n) changed();
+}
+chartHost.addEventListener('pointerup', endDrag);
+chartHost.addEventListener('pointercancel', () => { if(drag && drag.rect) drag.rect.remove(); drag = null; });
+
+let lastResults = {sum:[], ev:[]};
+function tableHtml(rows){
+  const cell = (c, tag) => `<${tag}${tag === 'td' && !/^[-–]?\d/.test(String(c)) ? ' class="l"' : ''}>${esc(c)}</${tag}>`;
+  return `<thead><tr>${rows[0].map(h => cell(h, 'th')).join('')}</tr></thead><tbody>${rows.slice(1).map(r => `<tr>${r.map(c => cell(c, 'td')).join('')}</tr>`).join('')}</tbody>`;
+}
+function renderAnalysis(res){
+  const ana = analyze(state, res);
+  $('anaNote').textContent = ana.note;
+  const sum = resultRows(ana), ev = eventRows(ana, res);
+  $('anaTable').innerHTML = ana.groups.length ? tableHtml(sum) : '';
+  $('anaEvents').innerHTML = ana.events.length ? tableHtml(ev) : '';
+  const np = ana.events.filter(e => e.kind === 'Peak').length, nt = ana.events.length - np;
+  $('selCount').textContent = `Selected: ${np} peak${np === 1 ? '' : 's'}, ${nt} trough${nt === 1 ? '' : 's'}.`;
+  lastResults = {sum, ev};
+  $('tsvOut').value = ana.groups.length ? [...sum, [], ...ev].map(r => r.join('\t')).join('\n') : '';
+}
+const csvText = () => [...lastResults.sum, [], ...lastResults.ev]
+  .map(r => r.map(c => /[",\n]/.test(String(c)) ? `"${String(c).replace(/"/g, '""')}"` : String(c)).join(',')).join('\r\n');
+$('copyTsv').addEventListener('click', async () => {
+  const ta = $('tsvOut'); if(!ta.value){ $('anaStatus').textContent = 'Nothing to copy yet.'; return; }
+  try{ await navigator.clipboard.writeText(ta.value); $('anaStatus').textContent = 'Copied.'; }
+  catch(_){ ta.focus(); ta.select(); const ok = document.execCommand && document.execCommand('copy');
+    $('anaStatus').textContent = ok ? 'Copied.' : 'Select the text below and copy it (Ctrl+C).'; }
+});
+
 /* ---------------- refresh ---------------- */
 let pending = false;
 function changed(full){ save(); if(full) syncControls(); if(!pending){ pending = true; requestAnimationFrame(() => { pending = false; refresh(); }); } }
 function syncControls(){                       // state -> every control (after loading settings etc.)
   syncTZ();
   for(const k of ['peaks','troughs']) if($(k).value !== state[k]) $(k).value = state[k];
-  $('showLD').checked = state.show_ld; $('extendBefore').checked = state.extend_before; $('nChanges').value = state.n_changes;
+  $('showLD').checked = state.show_ld; $('extendBefore').checked = state.extend_before;
   cycleRows.forEach((row, i) => { const c = state.cycles[i];
     row.mode.value = c.mode; row.phase.value = c.phase;
     if(document.activeElement !== row.lIn) row.lIn.value = c.L;
@@ -1428,7 +1738,9 @@ function syncControls(){                       // state -> every control (after 
   document.querySelectorAll('input[name=rowlab]').forEach(r => r.checked = r.value === state.rowlab);
   $('xMajor').value = state.x_major; $('xMinor').value = state.x_minor;
   syncSwatches();
-  for(const id of ['show_values','link_peak','link_trough','label_onsets','label_row_starts','mark_times','rows_auto']) $(id).checked = !!state[id];
+  for(const nm of ['drag_mode','sel_target']) document.querySelectorAll(`input[name=${nm}]`).forEach(r => r.checked = r.value === state[nm]);
+  $('phaseRef').value = state.phase_ref; $('draw_fit').checked = !!state.draw_fit;
+  for(const id of ['show_values','link_peak','link_trough','label_onsets','label_row_starts','mark_times','mark_changes','rows_auto']) $(id).checked = !!state[id];
   $('row_min').value = state.row_min; $('row_max').value = state.row_max;
 }
 function updateCount(k){
@@ -1442,10 +1754,11 @@ function refresh(){
   updateCount('peaks'); updateCount('troughs');
   $('ldBody').hidden = !state.show_ld;
   cycleRows.forEach((row, i) => {
-    const vis = i <= state.n_changes, ldm = state.cycles[i].mode === 'LD';
-    row.els.forEach(el => el.hidden = !vis);
-    row.tfL.setDisabled(!ldm); row.tfD.setDisabled(!ldm); row.phase.disabled = !ldm;
+    row.card.hidden = i > state.n_changes;
+    row.ldPart.hidden = state.cycles[i].mode !== 'LD';
+    row.del.disabled = state.n_changes < 1;
   });
+  $('addCond').disabled = state.n_changes >= MAX_CHANGES;
   $('ldErr').textContent = state.show_ld ? res.ldErrors.join('\n') : '';
   $('ldInfo').textContent = state.show_ld ? res.ldInfo : '';
   $('placedErr').textContent = res.placedErr || '';
@@ -1461,6 +1774,7 @@ function refresh(){
   $('rowsInfo').textContent = `${rr.lo} to ${rr.hi}  (${rr.hi - rr.lo + 1} rows)${state.rows_auto ? '  automatic' : ''}`;
   $('rowsNote').textContent = rr.note;
   $('row_min').disabled = $('row_max').disabled = state.rows_auto;
+  renderAnalysis(res);
   updateAdjust();
 }
 function loadAll(){ save(); syncControls(); refresh(); }
@@ -1486,7 +1800,7 @@ function updateAdjust(){
     if(!ok){ val.textContent = 'Set a valid clock time and time zone first'; return; }
     if(key === 'period'){ const m = a.get(); val.textContent = `${fmtDur2(m/60)}  (${(m/60).toFixed(3)} h)`;
       const r = row.querySelector('input[type=range]'); if(document.activeElement !== r) r.value = m; }
-    else val.textContent = fmtLocal(a.get(), last.tz) + (key === 'origin' ? `  (= ${g(last.origin.hour)} h of the data)` : '');
+    else val.textContent = fmtLocal(a.get(), last.tz) + (key === 'origin' ? `  (= ${g(last.origin.hour)} h)` : '');
   });
 }
 function holdable(btn, fn){
@@ -1562,7 +1876,13 @@ const browserDownloads = {
     });
   }
 };
-getCap('downloads').then(d => { downloads = d || browserDownloads; $('saveFig').hidden = false; $('saveSettings').hidden = false; });
+$('dlCsv').addEventListener('click', () => {
+  if(!downloads || !lastResults.sum.length){ $('anaStatus').textContent = 'No results yet.'; return; }
+  $('anaStatus').textContent = '';
+  downloads.save({filename:fileBase() + '_phase.csv', data:'\ufeff' + csvText()}).then(() => { $('anaStatus').textContent = 'Saved'; })
+    .catch(e => { $('anaStatus').textContent = e && e.code === 'declined' ? 'Save cancelled' : 'Saving isn’t available in this view.'; });
+});
+getCap('downloads').then(d => { downloads = d || browserDownloads; $('saveFig').hidden = false; $('saveSettings').hidden = false; $('dlCsv').hidden = false; });
 
 loadAll();
 })();
