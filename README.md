@@ -12,7 +12,7 @@ The app runs entirely in your web browser from the link above. There is nothing 
 
 1. Open **https://dxda6216.github.io/actogram_plotter/** in a current desktop browser (Chrome, Edge, Firefox or Safari). Bookmark it for next time.
 2. The app starts with example data, so a finished actogram is shown straight away.
-3. Click **Clear data**, paste your own peak and trough times or time series data, set the clock time of 0 h and the light/dark cycles, and the plot updates as you type.
+3. Click **Clear data**, paste your own peak and trough times (or time series data), set the clock time of 0 h and the light/dark cycles, and the plot updates as you type.
 4. Save the figure with **Save as PNG** or **Save as SVG**, and your inputs with **Save settings**.
 
 To use the app without an internet connection, download `index.html` from this repository and open it in your browser; it works the same way (only the web font falls back to a system font).
