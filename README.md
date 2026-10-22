@@ -26,5 +26,4 @@ To use the app without an internet connection, download `index.html` from this r
 The page is delivered by GitHub Pages, but everything you enter stays in your browser: no data is uploaded or sent anywhere, and the only external request is to import web fonts from Google. What the page remembers between visits is stored only in your own browser, so it is not shared with other people or other computers.
 
 ## License
-This web application is released under the [MIT License](https://github.com/dxda6216/actogram_plotter/blob/main/LICENSE).
-You may download the source code and freely modify and use it. If your programming skills are limited, you can submit the source code to an AI like ChatGPT, Gemini, or Claude, tell it how you want to change it, and the AI will likely make some modifications and adjustments for you.
+This web application is released under the [MIT License](https://github.com/dxda6216/actogram_plotter/blob/main/LICENSE). You may download the source code and freely modify and use it. If your programming skills are limited, you can submit the source code to an AI like [ChatGPT](https://chatgpt.com/), [Gemini](https://gemini.google.com/), [Claude](https://claude.ai/), or [Copilot](https://copilot.com/), tell it how you want to change the app, and the AI will likely make some modifications and adjustments for you.
