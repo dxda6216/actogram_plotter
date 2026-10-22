@@ -216,6 +216,23 @@ dialog::backdrop{background:rgba(10,15,25,.35)}
 .sugg-list button:hover{background:var(--band)}
 .sugg-list button.on{background:var(--sel);color:var(--sel-ink)}
 .dlg-buttons{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+/* time-series input and plot */
+.inmode{margin:2px 0 4px}
+#seriesBox[hidden],#tsPanel[hidden]{display:none}
+#seriesText{min-height:150px;white-space:pre;overflow-wrap:normal;overflow-x:auto;font-size:.85rem}
+.tsgrid{display:grid;grid-template-columns:auto minmax(0,1fr);gap:7px 12px;align-items:center;margin-top:8px}
+.tsgrid .k{color:var(--muted);font-size:.88rem}
+.tsgrid input[type=number]{width:6.5em;justify-self:start}
+.tsgrid select,.tsgrid .seg{justify-self:start}
+.tsgrid .seg label{white-space:nowrap;padding:4px 9px;font-size:.92rem}
+.ts-title{font-weight:700;font-size:.92rem}
+.tsp{margin:0 0 14px;border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--surface)}
+.tsp h3{font-size:.98rem;margin:0 0 8px}
+.tsp .ana-bar button{padding:3px 9px}
+#tsHost svg{display:block;width:100%;min-width:640px;height:auto;cursor:crosshair;touch-action:none;user-select:none;-webkit-user-select:none}
+#tsHost .msg{padding:14px;color:#B8323F;font-size:.9rem;white-space:pre-line;margin:0}
+#tsStatus{color:var(--info);font-size:.85rem}
+textarea[readonly]{background:var(--bg)}
 </style>
 </head>
 <body>
@@ -223,7 +240,7 @@ dialog::backdrop{background:rgba(10,15,25,.35)}
   <img alt="" src="data:image/png;base64,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">
   <div>
     <h1>Actogram Plotter</h1>
-    <p>Peak and trough times (hours after time zero) with light/dark conditions, drawn as an actogram.</p>
+    <p>Peak and trough times (hours after time zero) – typed in or detected in time-series data – with light/dark conditions, drawn as an actogram.</p>
   </div>
 </header>
 
@@ -250,7 +267,39 @@ dialog::backdrop{background:rgba(10,15,25,.35)}
 
     <div class="block">
       <h2>Peaks and troughs (hours after 0 h)</h2>
-      <div class="series rec" data-tag="From your records · enter exactly">
+      <div class="seg inmode" role="radiogroup" aria-label="How the peaks and troughs are given"><label><input type="radio" name="input_mode" value="times">Enter the times</label><label><input type="radio" name="input_mode" value="series">Detect in time-series data</label></div>
+      <div id="seriesBox" hidden>
+        <div class="rec" data-tag="From your records · enter exactly">
+          <label for="seriesText" class="ts-title">Time series</label>
+          <p class="hint" style="margin:2px 0 6px">One row per time point: time (h after 0 h) and signal (e.g. bioluminescence), separated by tabs, spaces or commas. Header lines are skipped.</p>
+          <textarea id="seriesText" class="mono" spellcheck="false" wrap="off" placeholder="0.00&#9;846&#10;0.82&#9;1116&#10;1.65&#9;1447&#10;…"></textarea>
+          <div class="row" style="margin-top:6px">
+            <button type="button" id="seriesOpen">Open file…</button>
+            <input type="file" id="seriesFile" accept=".txt,.csv,.tsv,.dat,.tab,text/plain,text/csv" hidden>
+            <button type="button" id="seriesExample">Load example series</button>
+          </div>
+          <p class="info" id="tsInfo"></p>
+          <p class="errs" id="tsErr"></p>
+        </div>
+        <div class="ana-ctl" style="margin-top:10px">
+          <span class="ts-title">Peak/trough detection</span>
+          <div class="tsgrid">
+            <span class="k">Detect in</span>
+            <div class="seg" role="radiogroup" aria-label="Detect in"><label><input type="radio" name="ts_source" value="raw">Raw data</label><label><input type="radio" name="ts_source" value="detrended">Detrended data</label></div>
+            <label for="ts_method" class="k">Detrending</label>
+            <select id="ts_method"><option>Sinc Filter</option><option>Moving Average</option></select>
+            <label for="ts_sinc_cutoff" class="k">Cutoff period (h)</label><input type="number" id="ts_sinc_cutoff" min="1" max="240" step="1">
+            <label for="ts_sinc_order" class="k">Filter order</label><input type="number" id="ts_sinc_order" min="3" max="999" step="2">
+            <label for="ts_ma_window" class="k">Trend window (h)</label><input type="number" id="ts_ma_window" min="1" max="240" step="1">
+            <label for="ts_min_sep" class="k">Min. peak spacing (h)</label><input type="number" id="ts_min_sep" min="1" max="240" step="1">
+            <label for="ts_smooth" class="k">Line: moving average</label>
+            <span class="row" style="gap:6px"><select id="ts_smooth"><option value="1">1</option><option>3</option><option>5</option><option selected>7</option><option>9</option><option>11</option><option>13</option><option>15</option></select><span class="hint" style="margin:0">points (1 = none)</span></span>
+          </div>
+          <p class="hint">Sinc Filter: windowed-sinc low-pass (Hamming window), applied forwards and backwards; default cutoff 48 h, order 101. Moving Average: centred over the trend window, default 24 h. Detrended = data − trend. Peaks and troughs are the maxima and minima of the line: the raw data (default) or the detrended data, after a centred moving average (default 7 points; 1 = none), at least the minimum spacing apart (default 12 h). Unequal intervals are first resampled onto a regular grid (gaps longer than 2.5 intervals stay empty).</p>
+          <div class="row" style="margin-top:8px"><button type="button" id="tsReset">Reset manual edits</button><span class="hint" id="tsEditInfo" style="margin:0"></span></div>
+        </div>
+      </div>
+      <div class="series rec" id="listsBox" data-tag="From your records · enter exactly">
         <label><span class="p">● Peaks (h)</span>
           <textarea id="peaks" class="mono" spellcheck="false"></textarea>
           <span class="count" id="peaksCount"></span>
@@ -260,13 +309,13 @@ dialog::backdrop{background:rgba(10,15,25,.35)}
           <span class="count" id="troughsCount"></span>
         </label>
       </div>
-      <p class="hint">One value per line. Paste a column from a spreadsheet. Negative values are allowed.</p>
+      <p class="hint" id="listsHint">One value per line. Paste a column from a spreadsheet. Negative values are allowed.</p>
       <div class="row" style="margin-top:8px">
         <button type="button" id="loadExample">Load example</button>
         <button type="button" id="clearData">Clear data</button>
         <button type="button" id="clearAll">Clear all</button>
       </div>
-      <p class="hint">Clear data empties the two lists. Clear all also blanks the clock time of 0 h, the sample placement and every LD start date, and resets the cycles to LD 12:00 / 12:00 followed by LL.</p>
+      <p class="hint">Clear data empties the two lists (or, with time-series data, the time series and its hand edits). Clear all also blanks the clock time of 0 h, the sample placement and every LD start date, and resets the cycles to LD 12:00 / 12:00 followed by LL.</p>
     </div>
 
     <div class="block">
@@ -331,6 +380,16 @@ dialog::backdrop{background:rgba(10,15,25,.35)}
           <label class="chk"><input type="checkbox" id="label_row_starts">Label the start date/time of each cycle (y axis)</label>
           <label class="chk"><input type="checkbox" id="mark_times">Mark 0 h of the data (green *) and the sample placement (orange *)</label>
           <label class="chk"><input type="checkbox" id="mark_changes">Mark condition changes (light-purple lines)</label>
+          <label class="chk"><input type="checkbox" id="show_points">Show the peak and trough points</label>
+        </div>
+        <span class="k" style="align-self:start;padding-top:6px">Time series</span>
+        <div class="opts">
+          <div class="row" style="gap:8px">
+            <select id="ts_draw" aria-label="Draw the time series in the actogram"><option value="none">None</option><option value="activity">Activity bars</option><option value="heatmap">Heat map</option></select>
+            <div class="seg" role="radiogroup" aria-label="Data drawn"><label><input type="radio" name="ts_draw_data" value="raw">Raw</label><label><input type="radio" name="ts_draw_data" value="detrended">Detrended</label></div>
+          </div>
+          <div class="row" style="gap:8px"><span class="k" style="font-size:.88rem">Scale</span><select id="ts_draw_scale" aria-label="Scale"><option value="all">Whole record</option><option value="row">Each row</option></select></div>
+          <p class="hint" id="tsDrawNote" style="margin:0"></p>
         </div>
       </div>
     </div>
@@ -338,6 +397,18 @@ dialog::backdrop{background:rgba(10,15,25,.35)}
 
   <section class="panel" aria-labelledby="h-chart">
     <h2 id="h-chart" class="sr">Actogram</h2>
+    <div class="tsp" id="tsPanel" hidden>
+      <h3>Time series – peaks and troughs</h3>
+      <div class="ana-bar">
+        <span class="k">Click in the lower plot to</span>
+        <div class="seg" role="radiogroup" aria-label="What a click in the plot does"><label><input type="radio" name="ts_click" value="remove" checked>Remove</label><label><input type="radio" name="ts_click" value="add_peak">Add peak</label><label><input type="radio" name="ts_click" value="add_trough">Add trough</label><label><input type="radio" name="ts_click" value="zoom">Zoom (drag)</label></div>
+        <span class="row" style="gap:4px"><button type="button" id="tsZoomIn" title="Zoom in">＋</button><button type="button" id="tsZoomOut" title="Zoom out">－</button><button type="button" id="tsLeft" title="Scroll back in time">◀</button><button type="button" id="tsRight" title="Scroll forward in time">▶</button><button type="button" id="tsFull">Full view</button></span>
+        <span id="tsSaveBtns" hidden><button type="button" id="tsSavePng">Save plot as PNG</button> <button type="button" id="tsSaveSvg">SVG</button></span>
+      </div>
+      <p id="tsStatus" role="status" style="margin:6px 0 0;min-height:1.2em"></p>
+      <div class="paper-wrap" style="margin-top:4px"><div id="tsHost"></div></div>
+      <p class="hint">Upper plot: the data as entered with the trend line. Lower plot: the data used for detection (detrended or raw) drawn as a line (moving average, if chosen) with the peaks (red) and troughs (blue). Choose <b>Remove</b> and click a marker to delete it; choose <b>Add peak</b> / <b>Add trough</b> and click near the curve to add one (it snaps to the nearest sample); markers added by hand have a black ring. Hand edits are kept when the data or settings change; <b>Reset manual edits</b> returns to the automatic detection. Bars: light and dark periods of the light/dark conditions (when shown).</p>
+    </div>
     <div class="tune" aria-label="Fine-tune the plot">
       <div class="tune-head"><h3>Fine-tune the plot (1-minute steps)</h3><span>View settings · change freely</span></div>
       <div class="adj" data-key="origin">
@@ -638,6 +709,427 @@ const X_MINOR = ['No minor tick', ...Array.from({length:11},(_,i)=>i+1).map(n =>
 const xMajorCount = v => { const t = String(v).trim(); if(/^no/i.test(t)) return 0; const m = /^(\d+)/.exec(t); return m ? Math.max(0, Math.min(5, +m[1])) : 3; };
 const xMinorCount = v => { const m = /^\s*(\d+)/.exec(String(v)); return m ? Math.max(0, Math.min(11, +m[1])) : 0; };
 
+/* ---------------- time-series data -> peaks and troughs ----------------
+   The same steps as ttron2excel_data_analysis.py (and the desktop app):
+   rows sorted, duplicate times averaged; unequal intervals (> ±5 % from the median) resampled
+   onto a regular grid (step = median, gaps > 2.5 × median left empty); trend by Sinc Filter
+   (windowed-sinc FIR low-pass, Hamming window, applied forwards and backwards = scipy firwin +
+   filtfilt) or a centred Moving Average; detrended = raw − trend; peaks/troughs = local maxima /
+   minima of the raw (default) or detrended data, optionally after a centred moving average
+   (3–15 points; 1 = none), at least the minimum spacing apart (scipy
+   find_peaks with 'distance'); hand edits (removed / added) on top. */
+const TS_METHODS = ['Sinc Filter', 'Moving Average'];
+const TS_SMOOTH_CHOICES = [1, 3, 5, 7, 9, 11, 13, 15], TS_MIN_POINTS = 10, TS_TOL = 0.05, TS_GAP = 2.5, TS_MAX_H = 240;
+const TS_DEFAULTS = {ts_source:'raw', ts_smooth:'7', ts_method:'Sinc Filter', ts_ma_window:'24', ts_sinc_cutoff:'48', ts_sinc_order:'101', ts_min_sep:'12'};
+const emptyEdits = () => ({add_peaks:[], add_troughs:[], del_peaks:[], del_troughs:[]});
+function cleanEdits(v){
+  const o = emptyEdits();
+  if(v && typeof v === 'object') for(const k of Object.keys(o))
+    if(Array.isArray(v[k])) o[k] = v[k].map(Number).filter(Number.isFinite).map(x => Math.round(x*1e4)/1e4);
+  return o;
+}
+const editCount = e => Object.values(cleanEdits(e)).reduce((a, b) => a + b.length, 0);
+const fullwidth = s => s.replace(/[０-９．－＋]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0));
+const toNum = s => /^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/.test(s) ? +s : NaN;
+function parseSeries(text){
+  const t = [], y = []; let skipped = 0;
+  for(const line of String(text || '').split(/\r\n|\r|\n/)){
+    const s = fullwidth(line.trim());
+    if(!s || s[0] === '#') continue;
+    const tok = s.split(/[\s,;]+/).filter(Boolean);
+    if(tok.length < 2){ skipped++; continue; }
+    const a = toNum(tok[0]); let b = toNum(tok[1]);
+    if(!Number.isFinite(a)){ skipped++; continue; }
+    if(!Number.isFinite(b)){ if(!/^(nan|na|n\/a|-+)$/i.test(tok[1])){ skipped++; continue; } b = NaN; }
+    t.push(a); y.push(b);
+  }
+  return {t, y, skipped};
+}
+const median = a => { const s = [...a].sort((p, q) => p - q), n = s.length; return n ? (n % 2 ? s[(n-1)/2] : (s[n/2-1] + s[n/2])/2) : NaN; };
+function interp(xs, xp, fp, left, right){                    // like numpy.interp (xs and xp increasing)
+  const out = [], m = xp.length; let k = 0;
+  for(const x of xs){
+    if(x < xp[0]){ out.push(left); continue; }
+    if(x > xp[m-1]){ out.push(right); continue; }
+    if(m === 1){ out.push(fp[0]); continue; }
+    while(k < m - 2 && xp[k+1] <= x) k++;
+    const a = xp[k], b = xp[k+1];
+    out.push(x === b ? fp[k+1] : fp[k] + (fp[k+1] - fp[k])*(x - a)/(b - a));
+  }
+  return out;
+}
+function prepareSeries(t0, y0){
+  const info = {pointsRead:t0.length, notes:[]};
+  let back = 0; for(let i = 1; i < t0.length; i++) if(t0[i] < t0[i-1]) back++;
+  if(back) info.notes.push(`${back} rows out of time order (sorted)`);
+  const idx = t0.map((_, i) => i).sort((a, b) => t0[a] - t0[b] || a - b);
+  let t = [], y = [];
+  for(const i of idx){                                       // duplicate times averaged (measured values only)
+    if(t.length && t[t.length-1] === t0[i]){ const k = t.length - 1; y[k].push(y0[i]); }
+    else{ t.push(t0[i]); y.push([y0[i]]); }
+  }
+  if(t.length < t0.length) info.notes.push(`${t0.length - t.length} duplicate time points (averaged)`);
+  y = y.map(a => { const v = a.filter(Number.isFinite); return v.length ? v.reduce((p, q) => p + q, 0)/v.length : NaN; });
+  const d = t.slice(1).map((v, i) => v - t[i]), med = median(d);
+  const regular = d.length > 0 && !d.some(v => Math.abs(v - med)/med > TS_TOL);
+  Object.assign(info, {median:med, regular, resampled:false, first:t[0], last:t[t.length-1]});
+  if(regular || !(med > 0)) return {hours:t, raw:y, info};
+  const tv = [], yv = []; t.forEach((v, i) => { if(Number.isFinite(y[i])){ tv.push(v); yv.push(y[i]); } });
+  if(tv.length < 2) return {hours:t, raw:y, info};
+  const maxGap = TS_GAP*med, n = Math.floor((t[t.length-1] - t[0])/med + 1e-6) + 1;
+  const grid = Array.from({length:n}, (_, i) => Math.round((t[0] + med*i)*1e9)/1e9);
+  const out = interp(grid, tv, yv, NaN, NaN);
+  let r = 0;
+  for(let i = 0; i < n; i++){
+    while(r < tv.length && tv[r] < grid[i]) r++;              // searchsorted 'left'
+    const right = Math.min(Math.max(r, 1), tv.length - 1), left = right - 1;
+    const exact = Math.abs(grid[i] - tv[right]) <= 1e-9 || Math.abs(grid[i] - tv[left]) <= 1e-9;
+    if(tv[right] - tv[left] > maxGap + 1e-9 && !exact) out[i] = NaN;
+  }
+  Object.assign(info, {resampled:true, maxGap, gridPoints:n});
+  return {hours:grid, raw:out, info};
+}
+function rollingMean(y, w){                                    // centred, measured points only, gaps stay gaps
+  const n = y.length, h = (w - 1) >> 1, cs = [0], cc = [0];
+  for(let i = 0; i < n; i++){ const ok = Number.isFinite(y[i]); cs.push(cs[i] + (ok ? y[i] : 0)); cc.push(cc[i] + (ok ? 1 : 0)); }
+  return y.map((v, i) => { if(!Number.isFinite(v)) return NaN; const lo = Math.max(0, i - h), hi = Math.min(n, i + h + 1);
+    const c = cc[hi] - cc[lo]; return c > 0 ? (cs[hi] - cs[lo])/c : NaN; });
+}
+function fillBoth(y){                                          // bfill, then ffill
+  const o = y.slice();
+  for(let i = o.length - 2; i >= 0; i--) if(!Number.isFinite(o[i]) && Number.isFinite(o[i+1])) o[i] = o[i+1];
+  for(let i = 1; i < o.length; i++) if(!Number.isFinite(o[i]) && Number.isFinite(o[i-1])) o[i] = o[i-1];
+  return o;
+}
+function firwinLowpass(N, cutoff){
+  const h = [];
+  for(let i = 0; i < N; i++){
+    const m = i - (N - 1)/2, x = cutoff*m;
+    let v = cutoff*(x === 0 ? 1 : Math.sin(Math.PI*x)/(Math.PI*x));
+    if(N > 1) v *= 0.54 - 0.46*Math.cos(2*Math.PI*i/(N - 1));
+    h.push(v);
+  }
+  const s = h.reduce((a, b) => a + b, 0);
+  return h.map(v => v/s);
+}
+function firHistory(b, x){                                     // earlier inputs all = x[0]
+  const n = b.length, out = new Array(x.length);
+  for(let k = 0; k < x.length; k++){
+    let s = 0;
+    for(let j = 0; j < n; j++){ const i = k - j; s += b[j]*(i >= 0 ? x[i] : x[0]); }
+    out[k] = s;
+  }
+  return out;
+}
+function filtfilt(b, x){
+  const pad = 3*b.length, n = x.length;
+  if(n <= pad) throw new Error(`the data (${n} points) are too short for a filter of ${b.length} taps`);
+  const ext = [];
+  for(let i = pad; i >= 1; i--) ext.push(2*x[0] - x[i]);
+  ext.push(...x);
+  for(let i = n - 2; i >= n - 1 - pad; i--) ext.push(2*x[n-1] - x[i]);
+  let y = firHistory(b, ext);
+  y = firHistory(b, y.reverse()).reverse();
+  return y.slice(pad, pad + n);
+}
+function tsTrend(y, dt, method, win, cutoff, order){
+  if(method === 'Moving Average'){
+    let np = Math.ceil(win/dt); if(np % 2 === 0) np++;
+    return {trend:fillBoth(rollingMean(y, np)), label:`${np}-point moving average, centred`};
+  }
+  const n = y.length, maxOrder = Math.trunc(n/3) - 1;
+  if(order >= maxOrder) order = Math.max(1, maxOrder);
+  if(order % 2 === 0) order++;
+  const taps = firwinLowpass(order, 2*dt/cutoff);
+  const xi = [], yi = []; y.forEach((v, i) => { if(Number.isFinite(v)){ xi.push(i); yi.push(v); } });
+  const filled = interp(y.map((_, i) => i), xi, yi, yi[0], yi[yi.length-1]);
+  return {trend:filtfilt(taps, filled), label:`Sinc Filter C=${g(cutoff)}h O=${order}`};
+}
+function localMaxima(x){
+  const p = []; let i = 1; const iMax = x.length - 1;
+  while(i < iMax){
+    if(x[i-1] < x[i]){
+      let a = i + 1; while(a < iMax && x[a] === x[i]) a++;
+      if(x[a] < x[i]){ p.push((i + a - 1) >> 1); i = a; }
+    }
+    i++;
+  }
+  return p;
+}
+function byDistance(peaks, x, dist){
+  const n = peaks.length, keep = new Array(n).fill(true);
+  const order = peaks.map((_, j) => j).sort((a, b) => x[peaks[a]] - x[peaks[b]] || a - b);
+  for(let q = n - 1; q >= 0; q--){
+    const j = order[q]; if(!keep[j]) continue;
+    for(let k = j - 1; k >= 0 && peaks[j] - peaks[k] < dist; k--) keep[k] = false;
+    for(let k = j + 1; k < n && peaks[k] - peaks[j] < dist; k++) keep[k] = false;
+  }
+  return peaks.filter((_, j) => keep[j]);
+}
+function findPeaksTroughs(s, minSep, dt){
+  const ok = s.map(Number.isFinite);
+  const first = ok.indexOf(true), last = ok.lastIndexOf(true);
+  if(first < 0) return {p:[], t:[]};
+  const part = s.slice(first, last + 1), okp = ok.slice(first, last + 1);
+  const xi = [], yi = []; part.forEach((v, i) => { if(okp[i]){ xi.push(i); yi.push(v); } });
+  const vals = interp(part.map((_, i) => i), xi, yi, yi[0], yi[yi.length-1]), neg = vals.map(v => -v);
+  const dist = (minSep && dt) ? Math.max(1, Math.trunc(minSep/dt)) : 5;
+  return {p:byDistance(localMaxima(vals), vals, dist).filter(i => okp[i]).map(i => first + i),
+          t:byDistance(localMaxima(neg), neg, dist).filter(i => okp[i]).map(i => first + i)};
+}
+function applyEdits(hours, smooth, autoP, autoT, e, dt){
+  const P = autoP.slice(), T = autoT.slice(), tol = 0.5*dt + 1e-6;
+  for(const [key, arr] of [['del_peaks', P], ['del_troughs', T]]) for(const h of e[key]){
+    let best = -1, bd = Infinity;
+    arr.forEach((i, k) => { const d = Math.abs(hours[i] - h); if(d <= tol && d < bd){ bd = d; best = k; } });
+    if(best >= 0) arr.splice(best, 1);
+  }
+  const valid = []; smooth.forEach((v, i) => { if(Number.isFinite(v)) valid.push(i); });
+  if(valid.length) for(const [key, arr, other] of [['add_peaks', P, T], ['add_troughs', T, P]]) for(const h of e[key]){
+    let best = valid[0], bd = Infinity;
+    for(const i of valid){ const d = Math.abs(hours[i] - h); if(d < bd){ bd = d; best = i; } }
+    if(!arr.includes(best) && !other.includes(best)) arr.push(best);
+  }
+  return {P:P.sort((a, b) => a - b), T:T.sort((a, b) => a - b)};
+}
+const posNum = (v, what, errs) => { const x = toNum(String(v ?? '').trim()); if(!(Number.isFinite(x) && x > 0)) errs.push(`${what} must be a positive number.`); return x; };
+let tsCache = {key:null, val:null};
+function analyzeSeries(S){
+  const key = JSON.stringify([S.series, S.ts_source, S.ts_method, S.ts_ma_window, S.ts_sinc_cutoff, S.ts_sinc_order, S.ts_min_sep, S.ts_smooth, S.ts_edits]);
+  if(tsCache.key === key) return tsCache.val;
+  const out = {ok:false, error:'', info:'', peaks:[], troughs:[], autoP:[], autoT:[]};
+  tsCache = {key, val:out};
+  const {t, y, skipped} = parseSeries(S.series);
+  if(!t.length){ out.error = 'No time-series data yet.' + (skipped ? ` (${skipped} line${skipped === 1 ? '' : 's'} could not be read.)` : ''); return out; }
+  if(t.length < TS_MIN_POINTS){ out.error = `Only ${t.length} data rows were read; at least ${TS_MIN_POINTS} are needed.`; return out; }
+  const {hours, raw, info} = prepareSeries(t, y), n = hours.length;
+  const dt = n > 1 ? (hours[n-1] - hours[0])/(n - 1) : NaN;
+  if(!(dt > 0)){ out.error = 'The time points must not all be the same.'; return out; }
+  const lines = [`${info.pointsRead} rows read, ${g(info.first)} to ${g(info.last)} h; median interval ${info.median.toFixed(3)} h`];
+  if(info.resampled) lines.push(`Intervals not equal: resampled onto a regular ${info.median.toFixed(3)} h grid (${info.gridPoints} points; gaps longer than ${info.maxGap.toFixed(2)} h left empty).`);
+  if(skipped) info.notes.push(`${skipped} line${skipped === 1 ? '' : 's'} skipped (not two numbers)`);
+  if(info.notes.length) lines.push(info.notes.join('; ') + '.');
+  Object.assign(out, {t, y, hours, raw, dt, info:lines.join('\n')});
+  const errs = [], source = S.ts_source === 'raw' ? 'raw' : 'detrended';
+  const method = TS_METHODS.includes(S.ts_method) ? S.ts_method : 'Sinc Filter';
+  const minSep = posNum(S.ts_min_sep, 'The minimum peak spacing', errs);
+  if(minSep > TS_MAX_H) errs.push(`The minimum peak spacing must not exceed ${TS_MAX_H} h.`);
+  let trend = null, label = null;
+  const terr = [];                       // the trend is also wanted for drawing detrended data
+  {
+    const dur = dt*(n - 1); let win = 24, cutoff = 48, order = 101;
+    if(method === 'Moving Average'){
+      win = posNum(S.ts_ma_window, 'The moving-average window', terr);
+      if(win > 0){
+        if(win < 3*dt) terr.push(`The moving-average window must be at least 3 sampling intervals (${(3*dt).toFixed(2)} h).`);
+        else if(win > TS_MAX_H) terr.push(`The moving-average window must not exceed ${TS_MAX_H} h.`);
+        else if(win > dur) terr.push(`The moving-average window is longer than the recording (${dur.toFixed(1)} h).`);
+      }
+    }else{
+      cutoff = posNum(S.ts_sinc_cutoff, 'The cutoff period', terr);
+      if(cutoff > 0){
+        if(!(cutoff > 2*dt)) terr.push(`The cutoff period must be longer than 2 sampling intervals (${(2*dt).toFixed(2)} h).`);
+        else if(cutoff > TS_MAX_H) terr.push(`The cutoff period must not exceed ${TS_MAX_H} h.`);
+      }
+      const o = toNum(String(S.ts_sinc_order ?? '').trim());
+      order = Number.isFinite(o) ? Math.trunc(o) : 0;
+      if(order < 3) terr.push('The sinc filter order must be a whole number of at least 3.');
+    }
+    if(!raw.some(Number.isFinite)) terr.push('The data have no measured values.');
+    if(!terr.length){
+      try{ ({trend, label} = tsTrend(raw, dt, method, win, cutoff, order)); }
+      catch(e){ terr.push(`Detrending failed: ${e.message}. Use a lower filter order or longer data.`); }
+    }
+  }
+  if(source === 'detrended') errs.push(...terr);
+  else if(terr.length){ trend = null; label = null; out.trendError = terr.join('\n'); }
+  if(errs.length){ out.error = errs.join('\n'); return out; }
+  const signal = source === 'detrended' ? raw.map((v, i) => v - trend[i]) : raw;
+  const nSm = TS_SMOOTH_CHOICES.includes(+S.ts_smooth) ? +S.ts_smooth : 1;
+  const smooth = nSm > 1 ? rollingMean(signal, nSm) : signal.slice();
+  const auto = findPeaksTroughs(smooth, minSep, dt);
+  const ed = applyEdits(hours, smooth, auto.p, auto.t, cleanEdits(S.ts_edits), dt);
+  Object.assign(out, {ok:true, source, smoothN:nSm, trend, label, signal, smooth, autoP:auto.p, autoT:auto.t, peaks:ed.P, troughs:ed.T});
+  return out;
+}
+const tsHour = (ts, i) => Math.round(ts.hours[i]*1000)/1000;
+const tsText = (ts, kind) => (kind === 'peak' ? ts.peaks : ts.troughs).map(i => g(tsHour(ts, i))).join('\n');
+function editRemove(e0, ts, kind, i){
+  const e = cleanEdits(e0), add = kind === 'peak' ? 'add_peaks' : 'add_troughs', del = kind === 'peak' ? 'del_peaks' : 'del_troughs';
+  const h = ts.hours[i], tol = 0.5*ts.dt + 1e-6, near = e[add].filter(v => Math.abs(v - h) <= tol);
+  if(near.length) e[add] = e[add].filter(v => !near.includes(v));     // a hand-added one: just forget it
+  else e[del].push(Math.round(h*1e4)/1e4);
+  return e;
+}
+function editAdd(e0, ts, kind, i){
+  const e = cleanEdits(e0), add = kind === 'peak' ? 'add_peaks' : 'add_troughs', del = kind === 'peak' ? 'del_peaks' : 'del_troughs';
+  const h = ts.hours[i], tol = 0.5*ts.dt + 1e-6;
+  e[del] = e[del].filter(v => Math.abs(v - h) > tol);                  // an automatic one comes back
+  if(!(kind === 'peak' ? ts.autoP : ts.autoT).includes(i)) e[add].push(Math.round(h*1e4)/1e4);
+  return e;
+}
+
+/* time-series plot (SVG): raw data + trend, detection curve + markers, light/dark bars */
+function niceStep(span, n, mant){
+  const raw = span/Math.max(1, n), p = Math.pow(10, Math.floor(Math.log10(raw)));
+  for(const m of mant) if(m*p >= raw - 1e-12) return m*p;
+  return 10*p;
+}
+function buildSeriesSVG(ts, S, res, view){
+  const VW = 1000, ml = 74, mr = 168, pw = VW - ml - mr, out = [], geo = {};
+  const LIGHT = pickColor(S.light_color, LIGHT_COLORS), DARK = pickColor(S.dark_color, DARK_COLORS);
+  const hasLD = !!(S.show_ld && res && res.ld), two = ts.source === 'detrended';
+  const hMin = Math.min(...ts.hours), hMax = Math.max(...ts.hours);
+  const full = [Math.min(0, Math.floor(hMin/24)*24), Math.max(Math.ceil(hMax/24)*24, Math.floor(hMin/24)*24 + 24)];
+  const [x0, x1] = view || full;
+  geo.full = full; geo.x0 = x0; geo.x1 = x1;
+  const X = x => ml + (x - x0)/(x1 - x0)*pw;
+  const rows = [];
+  if(hasLD) rows.push({k:'bar', h:16});
+  if(two) rows.push({k:'raw', h:190});
+  if(hasLD && two) rows.push({k:'bar', h:16});
+  rows.push({k:'det', h:250});
+  let y = 44; for(const r of rows){ r.top = y; y += r.h + (r.k === 'bar' ? 4 : (r.k === 'raw' ? 10 : 0)); }
+  const VH = y + 52;
+  out.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${VW} ${VH}" width="${VW}" height="${VH}" font-family='${FONT}' role="img" aria-label="Time series with peaks and troughs">`);
+  out.push(`<rect width="${VW}" height="${VH}" fill="#fff"/>`);
+  out.push(`<defs><clipPath id="tsclip"><rect x="${ml}" y="0" width="${pw}" height="${VH}"/></clipPath></defs>`);
+  const title = (S.title.trim() ? S.title.trim() + '   –   ' : '') + `peaks and troughs of the ${two ? 'detrended' : 'raw'} data`;
+  out.push(`<text x="${ml + pw/2}" y="24" font-size="14" fill="${C.ink}" text-anchor="middle">${esc(title)}</text>`);
+  const step = niceStep(x1 - x0, 15, [1, 1.2, 2.4, 3, 6]);
+  const xt = []; for(let v = Math.ceil(x0/step - 1e-9)*step; v <= x1 + 1e-9; v += step) xt.push(Math.round(v*1e6)/1e6);
+  const inView = (hx, hy) => { const v = []; hx.forEach((x, i) => { if(x >= x0 && x <= x1 && Number.isFinite(hy[i])) v.push(hy[i]); }); return v; };
+  const legend = (top, items) => items.forEach((it, k) => {
+    const lx = ml + pw + 14, ly = top + 10 + k*26;
+    if(it.kind === 'dot') out.push(`<circle cx="${lx + 8}" cy="${ly}" r="${it.r || 2.2}" fill="${it.c}"${it.ring ? ` fill-opacity="0" stroke="#000" stroke-width="1.2"` : ''}/>`);
+    else if(it.kind === 'box') out.push(`<rect x="${lx}" y="${ly - 6}" width="16" height="11" fill="${it.c}" stroke="#555" stroke-width="0.6"/>`);
+    else out.push(`<line x1="${lx}" y1="${ly}" x2="${lx + 16}" y2="${ly}" stroke="${it.c}" stroke-width="1.4"/>`);
+    const parts = String(it.t).split('\n');
+    parts.forEach((p, j) => out.push(`<text x="${lx + 22}" y="${ly + 4 + j*11 - (parts.length - 1)*5}" font-size="10" fill="${C.ink}">${esc(p)}</text>`));
+  });
+  rows.forEach((r, ri) => {
+    if(r.k === 'bar'){
+      out.push(`<text x="${ml - 6}" y="${r.top + r.h/2 + 3.5}" font-size="10" fill="${C.axis}" text-anchor="end">L/D</text>`);
+      out.push(`<g clip-path="url(#tsclip)">`);
+      for(const [a, b, light] of ldIntervals(res.ld, x0, x1))
+        out.push(`<rect x="${X(a).toFixed(2)}" y="${r.top}" width="${Math.max(0.3, X(b) - X(a)).toFixed(2)}" height="${r.h}" fill="${light ? LIGHT : DARK}" stroke="#555" stroke-width="0.6"/>`);
+      out.push('</g>');
+      if(ri === 0){ const lx = ml + pw + 14, ly = r.top + 2;
+        out.push(`<rect x="${lx}" y="${ly}" width="16" height="11" fill="${LIGHT}" stroke="#555" stroke-width="0.6"/><text x="${lx + 21}" y="${ly + 9.5}" font-size="10" fill="${C.ink}">Light</text>`);
+        out.push(`<rect x="${lx + 60}" y="${ly}" width="16" height="11" fill="${DARK}" stroke="#555" stroke-width="0.6"/><text x="${lx + 81}" y="${ly + 9.5}" font-size="10" fill="${C.ink}">Dark</text>`); }
+      return;
+    }
+    const series = r.k === 'raw' ? [[ts.t, ts.y], [ts.hours, ts.trend]] : [[ts.hours, ts.signal]];
+    const vals = series.flatMap(([a, b]) => inView(a, b));
+    let lo = vals.length ? Math.min(...vals) : 0, hi = vals.length ? Math.max(...vals) : 1;
+    const pad = (hi - lo)*0.12 || Math.abs(hi)*0.1 || 1; lo -= pad; hi += pad;
+    const Y = v => r.top + r.h - (v - lo)/(hi - lo)*r.h;
+    out.push(`<rect x="${ml}" y="${r.top}" width="${pw}" height="${r.h}" fill="none" stroke="${C.frame}" stroke-width="1"/>`);
+    const ys = niceStep(hi - lo, 6, [1, 2, 2.5, 5]);
+    for(let v = Math.ceil(lo/ys)*ys; v <= hi; v += ys){
+      const yy = Y(v).toFixed(2);
+      out.push(`<line x1="${ml}" y1="${yy}" x2="${ml + pw}" y2="${yy}" stroke="${C.grid}" stroke-width="0.5" stroke-dasharray="3 3"/>`);
+      out.push(`<text x="${ml - 6}" y="${(+yy + 3.5).toFixed(2)}" font-size="10" fill="${C.axis}" text-anchor="end">${g(Math.round(v/ys)*ys)}</text>`);
+    }
+    for(const v of xt){ const xx = X(v).toFixed(2);
+      out.push(`<line x1="${xx}" y1="${r.top}" x2="${xx}" y2="${r.top + r.h}" stroke="${C.grid}" stroke-width="0.5" stroke-dasharray="3 3"/>`);
+      if(r.k === 'det') out.push(`<text x="${xx}" y="${r.top + r.h + 15}" font-size="10" fill="${C.axis}" text-anchor="middle">${g(v)}</text>`); }
+    const ylab = r.k === 'raw' ? 'Signal' : (two ? 'Detrended signal' : 'Signal');
+    out.push(`<text transform="translate(${ml - 52} ${r.top + r.h/2}) rotate(-90)" font-size="11" fill="${C.ink}" text-anchor="middle">${ylab}</text>`);
+    out.push(`<g clip-path="url(#tsclip)">`);
+    const dots = (hx, hy, col) => { const o = []; hx.forEach((x, i) => { if(x >= x0 - 1 && x <= x1 + 1 && Number.isFinite(hy[i])) o.push(`<circle cx="${X(x).toFixed(1)}" cy="${Y(hy[i]).toFixed(1)}" r="1.5"/>`); }); return `<g fill="${col}">${o.join('')}</g>`; };
+    const path = (hx, hy, col, w) => { let d = '', pen = false; hx.forEach((x, i) => { const v = hy[i]; if(!Number.isFinite(v)){ pen = false; return; } d += `${pen ? 'L' : 'M'}${X(x).toFixed(1)} ${Y(v).toFixed(1)}`; pen = true; }); return `<path d="${d}" fill="none" stroke="${col}" stroke-width="${w}"/>`; };
+    if(r.k === 'raw'){
+      out.push(dots(ts.t, ts.y, 'violet'), path(ts.hours, ts.trend, '#e00000', 1.2), '</g>');
+      legend(r.top, [{kind:'dot', c:'violet', t:'Data (as entered)'}, {kind:'line', c:'#e00000', t:`Trend line\n(${ts.label})`}]);
+      return;
+    }
+    if(two && lo < 0 && hi > 0) out.push(`<line x1="${ml}" y1="${Y(0).toFixed(2)}" x2="${ml + pw}" y2="${Y(0).toFixed(2)}" stroke="#999" stroke-width="0.7"/>`);
+    out.push(dots(ts.hours, ts.signal, 'violet'), path(ts.hours, ts.smooth, 'limegreen', 1.3));
+    const hand = [];
+    for(const [kind, arr, auto, col, sgn] of [['peak', ts.peaks, ts.autoP, PEAK, -1], ['trough', ts.troughs, ts.autoT, TROUGH, 1]]) for(const i of arr){
+      const cx = X(ts.hours[i]), cy = Y(ts.smooth[i]);
+      if(ts.hours[i] < x0 - 1 || ts.hours[i] > x1 + 1) continue;
+      out.push(`<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="4.6" fill="${col}"/>`);
+      if(!auto.includes(i)){ out.push(`<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="7.5" fill="none" stroke="#000" stroke-width="1.3"/>`); hand.push(kind); }
+      out.push(`<text x="${cx.toFixed(1)}" y="${(cy + sgn*9 + (sgn > 0 ? 8 : 0)).toFixed(1)}" font-size="9" fill="${col}" text-anchor="middle">${ts.hours[i].toFixed(2)} h</text>`);
+    }
+    out.push('</g>');
+    const items = [{kind:'dot', c:'violet', t:two ? 'Detrended data' : 'Data'}, {kind:'line', c:'limegreen', t:ts.smoothN > 1 ? `${ts.smoothN}-point moving average` : 'Line (no moving average)'},
+                   {kind:'dot', c:PEAK, r:4.6, t:'Peaks'}, {kind:'dot', c:TROUGH, r:4.6, t:'Troughs'}];
+    if(hand.length) items.push({kind:'dot', c:'#000', r:7, ring:true, t:'Added by hand'});
+    legend(r.top, items);
+    out.push(`<text x="${ml + pw/2}" y="${r.top + r.h + 34}" font-size="11" fill="${C.ink}" text-anchor="middle">Hours after 0 h of the data</text>`);
+    geo.det = {top:r.top, h:r.h, lo, hi, ml, pw, VW};
+  });
+  out.push('</svg>');
+  return {svg:out.join(''), geo};
+}
+
+// example bioluminescence record (time in h, signal), as pairs
+const EXAMPLE_SERIES_DATA = '0.00 846 0.82 1116 1.65 1447 2.46 1794 3.29 2121 4.13 2392 4.98 2710 5.82 2921 6.65 3086 7.47 ' +
+  '3196 8.29 3188 9.13 3172 9.93 3078 10.75 2952 11.61 2680 12.42 2419 13.29 2100 14.09 1859 14.95 ' +
+  '1485 15.79 1160 16.61 867 17.47 669 18.29 443 19.12 326 19.97 291 20.79 221 21.65 239 22.45 398 ' +
+  '23.30 568 24.11 769 24.96 1044 25.76 1266 26.60 1530 27.45 1807 28.25 2043 29.07 2281 29.91 2454 ' +
+  '30.73 2628 31.57 2716 32.43 2782 33.25 2688 34.06 2646 34.90 2506 35.72 2323 36.55 2105 37.39 ' +
+  '1878 38.24 1586 39.08 1289 39.93 1039 40.74 789 41.59 596 42.41 395 43.21 317 44.02 285 44.85 ' +
+  '237 45.70 311 46.52 373 47.35 550 48.18 744 49.00 917 49.81 1123 50.66 1407 51.48 1600 52.33 ' +
+  '1856 53.19 2030 54.00 2192 54.86 2302 55.70 2344 56.50 2395 57.37 2337 58.24 2284 59.06 2122 ' +
+  '59.92 1929 60.72 1786 61.52 1544 62.35 1315 63.16 1107 63.98 882 64.78 711 65.64 503 66.44 386 ' +
+  '67.25 285 68.10 275 68.94 270 69.77 325 70.63 410 71.44 528 72.27 722 73.09 874 73.92 1063 74.78 ' +
+  '1300 75.61 1488 76.42 1652 77.29 1838 78.14 1928 79.00 2011 79.83 2085 80.66 2084 81.52 2027 ' +
+  '82.35 1972 83.22 1795 84.07 1683 84.92 1470 85.74 1304 86.61 1103 87.46 912 88.27 781 89.10 584 ' +
+  '89.94 471 90.76 379 91.57 305 92.39 264 93.26 253 94.10 349 94.96 392 95.80 543 96.66 687 97.48 ' +
+  '850 98.34 1038 99.16 1157 100.02 1357 100.86 1506 101.67 1635 102.50 1700 103.32 1798 104.17 ' +
+  '1786 105.00 1774 105.83 1743 106.67 1656 107.48 1580 108.29 1425 109.16 1310 110.00 1131 110.82 ' +
+  '1012 111.69 820 112.55 671 113.42 522 114.25 435 115.08 316 115.88 273 116.74 280 117.54 303 ' +
+  '118.40 352 119.22 411 120.03 512 120.84 696 121.66 816 122.51 1000 123.35 1102 124.18 1227 ' +
+  '124.98 1406 125.78 1488 126.60 1545 127.44 1635 128.28 1610 129.11 1595 129.93 1584 130.77 1526 ' +
+  '131.62 1442 132.47 1366 133.31 1288 134.16 1161 135.00 1058 135.84 944 136.71 825 137.56 704 ' +
+  '138.36 603 139.22 533 140.08 435 140.88 379 141.75 311 142.58 312 143.44 307 144.31 295 145.17 ' +
+  '322 146.02 368 146.85 485 147.72 528 148.54 672 149.37 765 150.21 895 151.03 994 151.87 1138 ' +
+  '152.69 1253 153.55 1331 154.37 1393 155.24 1401 156.06 1410 156.88 1387 157.71 1433 158.57 1310 ' +
+  '159.42 1318 160.28 1233 161.08 1163 161.90 1131 162.74 973 163.56 910 164.38 802 165.25 705 ' +
+  '166.09 662 166.92 526 167.72 486 168.57 414 169.39 322 170.22 307 171.06 311 171.90 283 172.75 ' +
+  '290 173.57 300 174.42 317 175.27 361 176.13 473 176.95 514 177.76 593 178.59 656 179.44 735 ' +
+  '180.30 832 181.16 907 182.00 1001 182.87 1066 183.68 1129 184.54 1192 185.37 1253 186.21 1244 ' +
+  '187.06 1289 187.87 1266 188.68 1260 189.55 1225 190.36 1167 191.23 1148 192.04 1086 192.88 1040 ' +
+  '193.69 953 194.52 872 195.37 790 196.18 678 196.98 612 197.82 575 198.65 513 199.47 421 200.28 ' +
+  '382 201.14 335 202.00 317 202.85 273 203.67 274 204.50 267 205.33 290 206.17 351 207.01 358 ' +
+  '207.87 436 208.72 504 209.55 563 210.42 643 211.28 728 212.13 778 212.98 855 213.81 916 214.62 ' +
+  '1012 215.46 1047 216.27 1077 217.09 1127 217.94 1139 218.77 1139 219.63 1124 220.44 1100 221.31 ' +
+  '1060 222.15 1051 222.98 1003 223.83 897 224.66 855 225.51 774 226.36 710 227.22 613 228.06 544 ' +
+  '228.91 509 229.75 409 230.62 378 231.44 333 232.28 306 233.09 293 233.95 272 234.82 272 235.66 ' +
+  '323 236.48 322 237.32 362 238.14 412 238.97 490 239.77 530 240.61 590 241.42 659 242.22 709 ' +
+  '243.07 780 243.88 840 244.75 880 245.56 966 246.37 1006 247.17 1045 247.97 1057 248.80 1007 ' +
+  '249.65 1063 250.50 1040 251.33 1000 252.17 949 253.00 919 253.82 858 254.67 795 255.52 731 ' +
+  '256.37 654 257.21 590 258.06 509 258.91 450 259.75 417 260.56 340 261.43 319 262.28 272 263.15 ' +
+  '255 263.96 271 264.80 323 265.64 368 266.51 405 267.33 514 268.17 598 268.97 687 269.82 777 ' +
+  '270.65 863 271.50 935 272.36 947 273.22 1036 274.06 983 274.89 991 275.70 947 276.50 911 277.31 ' +
+  '888 278.15 820 278.98 715 279.79 699 280.66 594 281.51 565 282.35 490 283.20 433 284.02 415 ' +
+  '284.88 347 285.74 296 286.60 257 287.46 258 288.33 288 289.15 277 290.01 360 290.83 407 291.68 ' +
+  '439 292.48 531 293.35 608 294.19 688 295.02 770 295.84 831 296.70 915 297.51 927 298.37 950 ' +
+  '299.18 920 299.98 894 300.80 870 301.61 865 302.44 776 303.25 687 304.12 617 304.97 598 305.81 ' +
+  '512 306.65 416 307.48 420 308.33 316 309.15 284 309.98 285 310.80 275 311.67 274 312.54 308 ' +
+  '313.35 353 314.20 396 315.02 438 315.85 505 316.71 588 317.51 617 318.35 701 319.16 747 319.99 ' +
+  '818 320.85 863 321.69 885 322.55 927 323.41 919 324.24 923 325.07 861 325.92 852 326.76 766 ' +
+  '327.58 742 328.44 641 329.31 601 330.14 551 330.96 483 331.82 455 332.64 353 333.47 304 334.28 ' +
+  '285 335.08 266 335.92 251 336.77 269 337.62 279 338.48 329 339.30 379 340.13 461 340.98 513 ' +
+  '341.85 557 342.72 638 343.52 719 344.39 775 345.25 789 346.08 842 346.95 885 347.81 851 348.61 ' +
+  '857 349.42 864 350.24 840 351.09 813 351.90 782 352.71 695 353.56 622 354.41 557 355.24 496 ' +
+  '356.05 454 356.91 393 357.71 350 358.58 310 359.40 279 360.25 254 361.07 258 361.93 250 362.78 ' +
+  '332 363.58 339 364.43 368 365.30 410 366.15 516 367.00 548 367.86 620 368.69 704 369.55 738 ' +
+  '370.40 810 371.26 839 372.08 828 372.94 863 373.76 854 374.62 833 375.45 783 376.28 754 377.10 ' +
+  '693 377.93 655 378.74 579 379.58 500 380.40 490 381.23 388 382.09 380 382.91 344 383.72 284 ' +
+  '384.55 281 385.35 263 386.18 236 387.03 311 387.87 322 388.69 349 389.49 416 390.32 474 391.14 ' +
+  '524 391.98 586 392.84 641 393.66 676 394.52 760 395.35 785 396.15 809 396.98 831 397.84 870 ' +
+  '398.65 811 399.48 806 400.33 730 401.15 756 401.98 709 402.79 660 403.60 576 404.41 510 405.24 ' +
+  '482 406.08 403 406.88 371 407.70 339 408.55 297 409.42 264 410.29 280 411.15 262 411.98 292 ' +
+  '412.79 340 413.61 371 414.47 394 415.33 474 416.16 523 417.01 579 417.82 630 418.64 694 419.46 ' +
+  '758 420.33 786 421.17 792 421.97 819 422.83 812 423.70 825 424.57 779 425.42 745 426.27 698 ' +
+  '427.08 677 427.89 589 428.69 528 429.56 511 430.37 439 431.17 347 ';
+const exampleSeriesText = () => { const v = EXAMPLE_SERIES_DATA.trim().split(/\s+/), o = []; for(let i = 0; i + 1 < v.length; i += 2) o.push(`${v[i]}\t${v[i+1]}`); return o.join('\n'); };
+
 /* ---------------- settings (same keys as the desktop app's JSON) ---------------- */
 const EXAMPLE_PEAKS = [8.47, 32.75, 56.50, 80.31, 104.58, 128.26, 156.25, 187.62, 218.79, 249.09, 273.59, 298.62, 323.21, 347.92, 372.96, 397.81, 422.60];
 const EXAMPLE_TROUGHS = [20.48, 44.55, 68.51, 92.68, 116.69, 143.75, 172.13, 203.87, 234.09, 263.51, 287.85, 310.79, 335.77, 360.87, 385.51, 410.33];
@@ -655,13 +1147,14 @@ function exampleSettings(){
             blankCycle(), blankCycle(), blankCycle()],
     placed:'2026-10-04 13:27',
     origin:'lights_on', origin_time:'', period:DEFAULT_PERIOD, rows_auto:true, title:EXAMPLE_TITLE,
-    sel_peaks:[...EXAMPLE_PEAKS], sel_troughs:[...EXAMPLE_TROUGHS]
+    sel_peaks:[...EXAMPLE_PEAKS], sel_troughs:[...EXAMPLE_TROUGHS], input_mode:'times'
   };
 }
 function defaultSettings(){
   return {...exampleSettings(), plot:'double', rowlab:'number', show_values:false, link_peak:false, link_trough:false,
           row_min:0, row_max:5, label_onsets:false, label_row_starts:false, mark_times:true, mark_changes:true, x_major:X_MAJOR[3], x_minor:X_MINOR[0], light_color:LIGHT_COLORS[0][1], dark_color:DARK_COLORS[0][1],
-          phase_ref:'zt0_prev', draw_fit:true, drag_mode:'select', sel_target:'both'};
+          phase_ref:'zt0_prev', draw_fit:true, drag_mode:'select', sel_target:'both',
+          series:'', ts_edits:emptyEdits(), ...TS_DEFAULTS, ts_draw:'none', ts_draw_data:'raw', ts_draw_scale:'all', show_points:true};
 }
 function normalise(s){
   const d = Object.assign(defaultSettings(), s || {});
@@ -691,6 +1184,17 @@ function normalise(s){
   d.draw_fit = d.draw_fit !== false;
   if(!['select','deselect'].includes(d.drag_mode)) d.drag_mode = 'select';
   if(!['both','peaks','troughs'].includes(d.sel_target)) d.sel_target = 'both';
+  d.input_mode = d.input_mode === 'series' ? 'series' : 'times';
+  if(!['none','activity','heatmap'].includes(d.ts_draw)) d.ts_draw = 'none';
+  d.ts_draw_data = d.ts_draw_data === 'detrended' ? 'detrended' : 'raw';
+  d.ts_draw_scale = d.ts_draw_scale === 'row' ? 'row' : 'all';
+  d.show_points = d.show_points !== false;
+  d.series = String(d.series || '');
+  for(const k of Object.keys(TS_DEFAULTS)) d[k] = String(d[k] ?? TS_DEFAULTS[k]).trim();
+  if(!['detrended','raw'].includes(d.ts_source)) d.ts_source = TS_DEFAULTS.ts_source;
+  if(!TS_METHODS.includes(d.ts_method)) d.ts_method = TS_DEFAULTS.ts_method;
+  if(!TS_SMOOTH_CHOICES.includes(+d.ts_smooth)) d.ts_smooth = TS_DEFAULTS.ts_smooth; else d.ts_smooth = String(+d.ts_smooth);
+  d.ts_edits = cleanEdits(d.ts_edits);
   return d;
 }
 let state;
@@ -843,6 +1347,8 @@ function autoRows(S, res){
   const T = res.period, o = res.origin.hour;
   const vals = parseList(S.peaks).vals.concat(parseList(S.troughs).vals);
   const marks = res.placedHour !== null && res.placedHour !== undefined ? [res.placedHour] : [];
+  const sd = seriesForActogram(S);
+  if(sd){ const hh = sd.h.filter((x, i) => Number.isFinite(sd.v[i])); if(hh.length) vals.push(hh[0], hh[hh.length-1]); }
   const firstHour = Math.min(0, ...vals, ...marks);
   const lastHour = vals.length ? Math.max(...vals, ...marks) : firstHour + 6*T;
   const first = Math.floor((firstHour - o)/T);
@@ -968,6 +1474,69 @@ function eventRows(ana, res){
 /* ---------------- chart (SVG) ---------------- */
 const C = {ink:'#222', axis:'#444', grid:'#C9C9C9', frame:'#555'};
 const FONT = '"Helvetica Neue",Helvetica,Arial,sans-serif';
+
+/* ---------------- the time series drawn in the actogram (activity bars or heat map) ---------------- */
+const HEAT_HEIGHT = 0.62, ACTIVITY_COLOR = '#2b2b2b';
+function seriesForActogram(S){
+  if(S.input_mode !== 'series' || !['activity','heatmap'].includes(S.ts_draw)) return null;
+  const ts = analyzeSeries(S);
+  if(!ts.ok) return null;
+  if(S.ts_draw_data === 'detrended'){ if(!ts.trend) return null; return {h:ts.hours, v:ts.raw.map((x, i) => x - ts.trend[i]), name:'Detrended data', dt:ts.dt}; }
+  return {h:ts.hours, v:ts.raw, name:'Raw data', dt:ts.dt};
+}
+const pct = (s, p) => { const k = (s.length - 1)*p/100, f = Math.floor(k), c = Math.min(s.length - 1, f + 1); return s[f] + (s[c] - s[f])*(k - f); };   // numpy 'linear'
+function drawLimits(vals, diverging){
+  const v = vals.filter(Number.isFinite); if(!v.length) return null;
+  if(diverging){ const a = v.map(Math.abs).sort((p, q) => p - q); const m = pct(a, 99) || a[a.length-1] || 1; return [-m, m]; }
+  const s = v.sort((p, q) => p - q), lo = pct(s, 1), hi = pct(s, 99);
+  return hi > lo ? [lo, hi] : [lo, lo + 1];
+}
+const VIRIDIS = ['#440154','#482878','#3e4989','#31688e','#26828e','#1f9e89','#35b779','#6ece58','#b5de2b','#fde725'];
+const RDBU_R = ['#053061','#2166ac','#4393c3','#92c5de','#d1e5f0','#f7f7f7','#fddbc7','#f4a582','#d6604d','#b2182b','#67001f'];
+function rampColor(stops, t){
+  t = Math.max(0, Math.min(1, t)); const x = t*(stops.length - 1), i = Math.min(stops.length - 2, Math.floor(x)), f = x - i;
+  const a = stops[i], b = stops[i+1], ch = (s, k) => parseInt(s.substr(1 + 2*k, 2), 16);
+  return '#' + [0, 1, 2].map(k => Math.round(ch(a, k) + (ch(b, k) - ch(a, k))*f).toString(16).padStart(2, '0')).join('');
+}
+function seriesRowsSVG(S, data, firstRow, lastRow, o, T, dbl, X, Y, rh){
+  const out = [], {h, v, dt, name} = data, diverging = S.ts_draw_data === 'detrended', perRow = S.ts_draw_scale === 'row';
+  const stops = diverging ? RDBU_R : VIRIDIS, span = dbl ? 2*T : T;
+  const whole = drawLimits(v, diverging); if(!whole) return {svg:'', whole:null};
+  for(let r = firstRow; r <= lastRow; r++){
+    const loRow = o + r*T;
+    let lim = whole;
+    if(perRow){ const sel = []; h.forEach((x, i) => { if(x >= loRow - dt && x <= loRow + span + dt) sel.push(v[i]); }); lim = drawLimits(sel, diverging); }
+    if(!lim) continue;
+    const [vmin, vmax] = lim;
+    for(let half = 0; half < (dbl ? 2 : 1); half++){
+      const lo = o + (r + half)*T, xs = [], vs = [];
+      h.forEach((x, i) => { if(x >= lo - 1e-9 && x < lo + T - 1e-9){ xs.push(x - o - r*T); vs.push(v[i]); } });
+      if(!xs.length) continue;
+      const clip = x => Math.max(half*T, Math.min((half + 1)*T, x));
+      const edges = [clip(xs[0] - dt/2), ...xs.map(x => clip(x + dt/2))];
+      if(edges[0] - half*T < dt) edges[0] = half*T;
+      if((half + 1)*T - edges[edges.length-1] < dt) edges[edges.length-1] = (half + 1)*T;
+      if(S.ts_draw === 'activity'){
+        let d = '';
+        for(let i = 0; i < xs.length; i++){
+          if(!Number.isFinite(vs[i])) continue;
+          const hh = Math.max(0, Math.min(1, (vs[i] - vmin)/(vmax - vmin)))*0.8; if(hh <= 0) continue;
+          const x0 = X(edges[i]), x1 = X(edges[i+1]), yb = Y(r + 0.4), yt = Y(r + 0.4 - hh);
+          d += `M${x0.toFixed(2)} ${yb.toFixed(2)}V${yt.toFixed(2)}H${x1.toFixed(2)}V${yb.toFixed(2)}Z`;
+        }
+        if(d) out.push(`<path d="${d}" fill="${ACTIVITY_COLOR}" fill-opacity="0.85"/>`);
+      }else{
+        const y0 = Y(r + 0.4 - 0.8*HEAT_HEIGHT), hgt = 0.8*HEAT_HEIGHT*rh;
+        for(let i = 0; i < xs.length; i++){
+          if(!Number.isFinite(vs[i])) continue;
+          const x0 = X(edges[i]), w = X(edges[i+1]) - x0;
+          out.push(`<rect x="${x0.toFixed(2)}" y="${y0.toFixed(2)}" width="${(w + 0.35).toFixed(2)}" height="${hgt.toFixed(2)}" fill="${rampColor(stops, (vs[i] - vmin)/(vmax - vmin))}"/>`);
+        }
+      }
+    }
+  }
+  return {svg:out.join(''), whole, stops, name, perRow, diverging};
+}
 function buildSVG(S, res){
   const T = res.period, dbl = S.plot === 'double', span = dbl ? 2*T : T, o = res.origin.hour;
   const LIGHT = pickColor(S.light_color, LIGHT_COLORS), DARK = pickColor(S.dark_color, DARK_COLORS);
@@ -1013,6 +1582,10 @@ function buildSVG(S, res){
       }
     }
   }
+  // optional: the time series itself (activity bars or heat map)
+  const sdata = seriesForActogram(S);
+  const srows = sdata ? seriesRowsSVG(S, sdata, firstRow, lastRow, o, T, dbl, X, Y, rh) : null;
+  if(srows && srows.svg) out.push(`<g clip-path="url(#pc)">${srows.svg}</g>`);
   // grid, ticks
   const parts = xMajorCount(S.x_major) + 1;
   const majors = Array.from({length:parts*(dbl?2:1) + 1}, (_, k) => k*T/parts);
@@ -1138,6 +1711,7 @@ function buildSVG(S, res){
   const rad = Math.max(1.6, Math.min(4, rh*0.32));
   const selSets = selectedSets(S), hits = [];
   for(const [vals, col, kk] of [[peaks, PEAK, 'p'], [troughs, TROUGH, 't']]){
+    if(!S.show_points) break;
     for(const h of vals){
       const isSel = (kk === 'p' ? selSets.p : selSets.t).has(k4(h));
       const day = Math.floor((h - o)/T), x = h - o - day*T;
@@ -1154,11 +1728,12 @@ function buildSVG(S, res){
   }
   out.push(...markSvg);                          // asterisks on top of the points
   out.push(...hits);                             // invisible targets for clicking points
-  if(!all.length) out.push(`<text x="${ml + plotW/2}" y="${(plotTop + plotH/2 + 5).toFixed(1)}" font-size="14" fill="#666" text-anchor="middle">Paste peak and trough times to plot them</text>`);
+  if(!all.length && !sdata) out.push(`<text x="${ml + plotW/2}" y="${(plotTop + plotH/2 + 5).toFixed(1)}" font-size="14" fill="#666" text-anchor="middle">Paste peak and trough times to plot them</text>`);
 
   // legend
   const lx = ml + plotW + 18; let ly = plotTop + 6;
-  const items = [['dot', PEAK, 'Peaks'], ['dot', TROUGH, 'Troughs']];
+  const items = S.show_points ? [['dot', PEAK, 'Peaks'], ['dot', TROUGH, 'Troughs']] : [];
+  if(srows && srows.whole && S.ts_draw === 'activity') items.push(['box', ACTIVITY_COLOR, `${srows.name} (activity)`, 0.85]);
   if(ld){ const f = ld.segs[0];
     items.push(['box', LIGHT, multi ? 'Light (L)' : `Light (L ${fmtDur(f.L)})`, 1]);
     items.push(['box', DARK, multi ? 'Dark (D)' : `Dark (D ${fmtDur(f.D)})`, 1]); }
@@ -1180,6 +1755,16 @@ function buildSVG(S, res){
     for(const s of ld.segs){ ly += 15;
       const name = s.mode === 'LD' ? `L${fmtDur(s.L)} D${fmtDur(s.D)}` : s.mode;
       out.push(`<text x="${lx-8}" y="${ly}" font-size="10" fill="#444">${esc(name)} from ${g(s.startHour)} h</text>`); }
+  }
+  if(srows && srows.whole && S.ts_draw === 'heatmap'){          // colour bar under the legend
+    ly += 28; const bx = lx - 4, bh = 120, bw = 12;
+    out.push(`<text x="${lx-8}" y="${ly}" font-size="10.5" font-weight="700" fill="${C.ink}">${esc(srows.name)}</text>`);
+    if(srows.perRow) out.push(`<text x="${lx-8}" y="${ly + 13}" font-size="9.5" fill="#444">scaled per row</text>`);
+    const top = ly + (srows.perRow ? 22 : 10);
+    out.push(`<defs><linearGradient id="hmg" x1="0" y1="1" x2="0" y2="0">${srows.stops.map((c, i) => `<stop offset="${(i/(srows.stops.length - 1)).toFixed(3)}" stop-color="${c}"/>`).join('')}</linearGradient></defs>`);
+    out.push(`<rect x="${bx}" y="${top}" width="${bw}" height="${bh}" fill="url(#hmg)" stroke="#999" stroke-width="0.5"/>`);
+    const [a, b] = srows.whole, lab = srows.perRow ? ['high', srows.diverging ? '0' : '', 'low'] : [g(+b.toPrecision(3)), srows.diverging ? '0' : g(+((a + b)/2).toPrecision(3)), g(+a.toPrecision(3))];
+    lab.forEach((t, k) => { if(t !== '') out.push(`<text x="${bx + bw + 5}" y="${(top + k*bh/2 + 3.5).toFixed(1)}" font-size="9.5" fill="#444">${t}</text>`); });
   }
   out.push(`</svg>`);
   return out.join('');
@@ -1550,17 +2135,24 @@ for(const k of ['peaks','troughs']) $(k).addEventListener('input', () => { state
 $('loadExample').addEventListener('click', async () => {
   const has = state.peaks.trim() || state.troughs.trim();
   if(has && !await ask('Replace the current data with the example?', 'Peaks, troughs, the clock time of 0 h and the LD cycles are replaced; display options are kept.')) return;
+  tsBackup = null; tsDesel.clear();
   state = normalise({...state, ...exampleSettings()}); loadAll();
 });
 $('clearAll').addEventListener('click', async () => {
-  if(!await ask('⚠ Clear all data and dates?', 'Peaks and troughs, the clock time of 0 h, the sample placement and every LD start date are cleared. The first cycle is reset to LD 12:00 / 12:00 and Change 1 to LL. Display options are kept. This cannot be undone.')) return;
+  if(!await ask('⚠ Clear all data and dates?', 'Peaks and troughs (and the time-series data), the clock time of 0 h, the sample placement and every LD start date are cleared. The first cycle is reset to LD 12:00 / 12:00 and Change 1 to LL. Display options are kept. This cannot be undone.')) return;
   const cycles = Array.from({length:MAX_CHANGES+1}, blankCycle);
   cycles[1].mode = 'LL';
-  Object.assign(state, {peaks:'', troughs:'', t0:'', placed:'', cycles, n_changes:1, sel_peaks:[], sel_troughs:[]});
+  Object.assign(state, {peaks:'', troughs:'', t0:'', placed:'', cycles, n_changes:1, sel_peaks:[], sel_troughs:[], series:'', ts_edits:emptyEdits()});
+  tsBackup = null; tsDesel.clear();
   if(state.title.trim() === EXAMPLE_TITLE) state.title = '';
   state = normalise(state); loadAll();
 });
 $('clearData').addEventListener('click', async () => {
+  if(state.input_mode === 'series'){
+    if(!state.series.trim()) return;
+    if(!await ask('Clear the time-series data and its hand edits?', 'The detection settings, the clock time of 0 h and the LD cycles are kept.')) return;
+    state.series = ''; state.ts_edits = emptyEdits(); loadAll(); return;
+  }
   if(!state.peaks.trim() && !state.troughs.trim()) return;
   if(!await ask('Clear all peak and trough values?', 'The clock time of 0 h and the LD cycles are kept.')) return;
   state.peaks = ''; state.troughs = ''; state.sel_peaks = []; state.sel_troughs = [];
@@ -1643,7 +2235,7 @@ function syncSwatches(){
 }
 $('xMajor').addEventListener('change', () => { state.x_major = $('xMajor').value; changed(); });
 $('xMinor').addEventListener('change', () => { state.x_minor = $('xMinor').value; changed(); });
-for(const id of ['show_values','link_peak','link_trough','label_onsets','label_row_starts','mark_times','mark_changes'])
+for(const id of ['show_values','link_peak','link_trough','label_onsets','label_row_starts','mark_times','mark_changes','show_points'])
   $(id).addEventListener('change', () => { state[id] = $(id).checked; changed(); });
 
 // rows
@@ -1831,11 +2423,181 @@ $('copyTsv').addEventListener('click', async () => {
     $('anaStatus').textContent = ok ? 'Copied.' : 'Select the text below and copy it (Ctrl+C).'; }
 });
 
+/* ---------------- time-series input (UI) ---------------- */
+let tsBackup = null, tsView = null, tsViewKey = null, tsLast = null, tsGeo = null;
+const tsDesel = new Set();
+function tsModeChanged(mode){
+  tsDesel.clear();
+  if(mode === 'series'){
+    if(!tsBackup) tsBackup = {peaks:state.peaks, troughs:state.troughs, sel_peaks:[...state.sel_peaks], sel_troughs:[...state.sel_troughs]};
+  }else if(tsBackup){ Object.assign(state, tsBackup); tsBackup = null; for(const k of ['peaks','troughs']) $(k).value = state[k]; }
+  state.input_mode = mode; changed();
+}
+document.querySelectorAll('input[name=input_mode]').forEach(r => r.addEventListener('change', () => tsModeChanged(r.value)));
+$('seriesText').addEventListener('input', () => { state.series = $('seriesText').value; changed(); });
+async function tsLoadSeries(text){
+  const cur = state.series.trim();
+  if(cur && cur !== text.trim() && !await ask('Replace the current time-series data?', 'The detection settings are kept; hand edits of the peaks and troughs are discarded.')) return;
+  if(cur !== text.trim()) state.ts_edits = emptyEdits();
+  state.series = text; $('seriesText').value = text; tsView = null;
+  if(state.input_mode !== 'series'){ document.querySelector('input[name=input_mode][value=series]').checked = true; tsModeChanged('series'); }
+  else changed();
+}
+$('seriesExample').addEventListener('click', async () => {     // example series + the example clock time and LD schedule
+  const has = state.series.trim() || state.peaks.trim() || state.troughs.trim();
+  if(has && !await ask('Replace the current data with the example time series?', 'The clock time of 0 h, the sample placement, the LD cycles and the detection settings are replaced too (LD 12:12 → LD 15:15 → LL); display options are kept.')) return;
+  const ex = exampleSettings();
+  tsDesel.clear(); tsView = null;
+  state = normalise({...state, ...ex, ...TS_DEFAULTS, input_mode:'series', series:exampleSeriesText(), ts_edits:emptyEdits()});
+  tsBackup = {peaks:ex.peaks, troughs:ex.troughs, sel_peaks:[...ex.sel_peaks], sel_troughs:[...ex.sel_troughs]};
+  loadAll();
+});
+$('seriesOpen').addEventListener('click', () => $('seriesFile').click());
+$('seriesFile').addEventListener('change', () => {
+  const f = $('seriesFile').files[0]; if(!f) return;
+  const rd = new FileReader();
+  rd.onload = () => { tsLoadSeries(String(rd.result)); $('seriesFile').value = ''; };
+  rd.readAsText(f);
+});
+document.querySelectorAll('input[name=ts_source]').forEach(r => r.addEventListener('change', () => { state.ts_source = r.value; changed(); }));
+$('ts_method').addEventListener('change', () => { state.ts_method = $('ts_method').value; changed(); });
+$('ts_smooth').addEventListener('change', () => { state.ts_smooth = $('ts_smooth').value; changed(); });
+$('ts_draw').addEventListener('change', () => { state.ts_draw = $('ts_draw').value; changed(); });
+$('ts_draw_scale').addEventListener('change', () => { state.ts_draw_scale = $('ts_draw_scale').value; changed(); });
+document.querySelectorAll('input[name=ts_draw_data]').forEach(r => r.addEventListener('change', () => { state.ts_draw_data = r.value; changed(); }));
+for(const k of ['ts_sinc_cutoff','ts_sinc_order','ts_ma_window','ts_min_sep']) $(k).addEventListener('input', () => { state[k] = $(k).value; changed(); });
+$('tsReset').addEventListener('click', async () => {
+  if(!editCount(state.ts_edits)) return;
+  if(!await ask('Discard all hand edits?', 'The peaks and troughs go back to the automatic detection.')) return;
+  state.ts_edits = emptyEdits(); changed();
+});
+// detected peaks/troughs -> the two lists; selection follows (new values selected unless deselected earlier)
+function tsWriteDetected(ts){
+  for(const [k, kind, sel] of [['peaks','peak','sel_peaks'], ['troughs','trough','sel_troughs']]){
+    const chosen = new Set(state[sel].map(k4));
+    for(const v of parseList(state[k]).vals) chosen.has(k4(v)) ? tsDesel.delete(kind + k4(v)) : tsDesel.add(kind + k4(v));
+    const text = ts.ok ? tsText(ts, kind) : '';
+    state[sel] = parseList(text).vals.filter(v => !tsDesel.has(kind + k4(v)));
+    state[k] = text;
+    if($(k).value !== text) $(k).value = text;
+  }
+  save();
+}
+function tsSyncControls(){
+  document.querySelectorAll('input[name=input_mode]').forEach(r => r.checked = r.value === state.input_mode);
+  if($('seriesText').value !== state.series) $('seriesText').value = state.series;
+  document.querySelectorAll('input[name=ts_source]').forEach(r => r.checked = r.value === state.ts_source);
+  $('ts_method').value = state.ts_method; $('ts_smooth').value = state.ts_smooth;
+  for(const k of ['ts_sinc_cutoff','ts_sinc_order','ts_ma_window','ts_min_sep']) if(document.activeElement !== $(k)) $(k).value = state[k];
+}
+function tsRefresh(ts, res){
+  const series = state.input_mode === 'series', drawing = state.ts_draw !== 'none';
+  $('ts_draw').disabled = !series; $('ts_draw_scale').disabled = !series || !drawing;
+  document.querySelectorAll('input[name=ts_draw_data]').forEach(r => r.disabled = !series || !drawing);
+  $('tsDrawNote').textContent = !series ? 'Only with “Detect in time-series data”.'
+    : (drawing && ts.ok && state.ts_draw_data === 'detrended' && !ts.trend) ? 'Detrended data cannot be drawn: ' + (ts.trendError || 'no trend.')
+    : drawing ? (state.ts_draw === 'activity' ? 'Activity: bar height = signal (1st–99th percentile). ' : 'Heat map: colour = signal (1st–99th percentile; detrended: symmetric around 0). ') + 'Detrended data use the detrending settings of the time series.' : '';
+  $('seriesBox').hidden = !series; $('tsPanel').hidden = !series;
+  for(const k of ['peaks','troughs']) $(k).readOnly = series;
+  $('listsBox').dataset.tag = series ? 'Detected · edit them in the time-series plot' : 'From your records · enter exactly';
+  $('listsHint').textContent = series ? 'Detected automatically from the time series (read-only here). Click markers in the time-series plot to remove or add peaks and troughs.'
+                                      : 'One value per line. Paste a column from a spreadsheet. Negative values are allowed.';
+  if(!series){ tsLast = null; return; }
+  tsLast = ts;
+  $('tsInfo').textContent = ts.info || ''; $('tsErr').textContent = ts.error || '';
+  const det = state.ts_source !== 'raw' || (drawing && state.ts_draw_data === 'detrended'), mov = state.ts_method === 'Moving Average';
+  $('ts_method').disabled = !det;
+  $('ts_sinc_cutoff').disabled = $('ts_sinc_order').disabled = !det || mov;
+  $('ts_ma_window').disabled = !det || !mov;
+  const n = editCount(state.ts_edits);
+  $('tsEditInfo').textContent = n ? `${n} hand edit${n === 1 ? '' : 's'}` : 'No hand edits';
+  $('tsReset').disabled = !n;
+  if(tsViewKey !== state.series){ tsView = null; tsViewKey = state.series; }
+  const host = $('tsHost');
+  if(!ts.ok){ host.innerHTML = `<p class="msg">${esc(ts.error || 'No time-series data yet.')}</p>`; tsGeo = null; return; }
+  const b = buildSeriesSVG(ts, state, res, tsView);
+  host.innerHTML = b.svg; tsGeo = b.geo;
+}
+function tsSetView(a, b){
+  if(!tsGeo) return;
+  const [f0, f1] = tsGeo.full, w = Math.min(f1 - f0, Math.max(1, b - a));
+  let x0 = Math.max(f0, Math.min(a, f1 - w)); const x1 = x0 + w;
+  tsView = (x0 <= f0 + 1e-9 && x1 >= f1 - 1e-9) ? null : [x0, x1];
+  refresh();
+}
+const tsCur = () => tsGeo ? [tsGeo.x0, tsGeo.x1] : [0, 1];
+$('tsZoomIn').addEventListener('click', () => { const [a, b] = tsCur(), c = (a + b)/2, w = (b - a)/4; tsSetView(c - w, c + w); });
+$('tsZoomOut').addEventListener('click', () => { const [a, b] = tsCur(), c = (a + b)/2, w = b - a; tsSetView(c - w, c + w); });
+$('tsLeft').addEventListener('click', () => { const [a, b] = tsCur(), d = (b - a)*0.25; tsSetView(a - d, b - d); });
+$('tsRight').addEventListener('click', () => { const [a, b] = tsCur(), d = (b - a)*0.25; tsSetView(a + d, b + d); });
+$('tsFull').addEventListener('click', () => { tsView = null; refresh(); });
+const tsClickMode = () => (document.querySelector('input[name=ts_click]:checked') || {}).value || 'remove';
+function tsPoint(e){
+  const svg = $('tsHost').querySelector('svg'); if(!svg || !tsGeo) return null;
+  const m = svg.getScreenCTM(); if(!m) return null;
+  const p = new DOMPoint(e.clientX, e.clientY).matrixTransform(m.inverse());
+  const d = tsGeo.det;
+  return {svg, ux:p.x, uy:p.y, scale:m.a, x:tsGeo.x0 + (p.x - d.ml)/d.pw*(tsGeo.x1 - tsGeo.x0), inPlot:p.x >= d.ml && p.x <= d.ml + d.pw};
+}
+let tsDrag = null;
+$('tsHost').addEventListener('pointerdown', e => {
+  if(e.button !== 0) return;
+  const p = tsPoint(e); if(!p || !p.inPlot) return;
+  e.preventDefault();
+  tsDrag = {p, rect:null};
+  try{ $('tsHost').setPointerCapture(e.pointerId); }catch(_){}
+});
+$('tsHost').addEventListener('pointermove', e => {
+  if(!tsDrag || tsClickMode() !== 'zoom') return;
+  const p = tsPoint(e); if(!p) return;
+  const d = tsGeo.det, x0 = Math.max(d.ml, Math.min(tsDrag.p.ux, p.ux)), x1 = Math.min(d.ml + d.pw, Math.max(tsDrag.p.ux, p.ux));
+  if(!tsDrag.rect){ tsDrag.rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    tsDrag.rect.setAttribute('fill', 'rgba(31,79,209,0.10)'); tsDrag.rect.setAttribute('stroke', '#1f4fd1'); tsDrag.rect.setAttribute('stroke-dasharray', '4 3');
+    tsDrag.rect.setAttribute('y', 30); tsDrag.rect.setAttribute('height', p.svg.viewBox.baseVal.height - 60); p.svg.append(tsDrag.rect); }
+  tsDrag.rect.setAttribute('x', x0); tsDrag.rect.setAttribute('width', Math.max(0, x1 - x0));
+});
+function tsEndDrag(e){
+  const dr = tsDrag; tsDrag = null; if(!dr) return;
+  const p = tsPoint(e) || dr.p, mode = tsClickMode(), ts = tsLast;
+  if(mode === 'zoom'){
+    if(dr.rect) dr.rect.remove();
+    if(Math.abs(p.ux - dr.p.ux)*p.scale > 6) tsSetView(Math.min(p.x, dr.p.x), Math.max(p.x, dr.p.x));
+    return;
+  }
+  if(!ts || !ts.ok || Math.hypot(p.ux - dr.p.ux, p.uy - dr.p.uy)*p.scale > 6) return;
+  const d = tsGeo.det;
+  if(p.uy < d.top - 8 || p.uy > d.top + d.h + 8){ $('tsStatus').textContent = 'Click in the lower plot.'; return; }
+  const X = x => d.ml + (x - tsGeo.x0)/(tsGeo.x1 - tsGeo.x0)*d.pw, Y = v => d.top + d.h - (v - d.lo)/(d.hi - d.lo)*d.h;
+  if(mode === 'remove'){
+    let best = null, bd = Infinity;
+    for(const [kind, arr] of [['peak', ts.peaks], ['trough', ts.troughs]]) for(const i of arr){
+      const dist = Math.hypot(X(ts.hours[i]) - p.ux, Y(ts.smooth[i]) - p.uy);
+      if(dist < bd){ bd = dist; best = [kind, i]; }
+    }
+    if(!best || bd*p.scale > 25){ $('tsStatus').textContent = best ? 'No marker near the click.' : 'There are no markers to remove.'; return; }
+    state.ts_edits = editRemove(state.ts_edits, ts, best[0], best[1]);
+    $('tsStatus').textContent = `Removed ${best[0]} at ${ts.hours[best[1]].toFixed(2)} h.`;
+    changed(); return;
+  }
+  const kind = mode === 'add_peak' ? 'peak' : 'trough';
+  let idx = -1, bd = Infinity;
+  ts.smooth.forEach((v, i) => { if(Number.isFinite(v)){ const dd = Math.abs(ts.hours[i] - p.x); if(dd < bd){ bd = dd; idx = i; } } });
+  if(idx < 0) return;
+  const same = kind === 'peak' ? ts.peaks : ts.troughs, other = kind === 'peak' ? ts.troughs : ts.peaks, h = ts.hours[idx].toFixed(2);
+  if(same.includes(idx)){ $('tsStatus').textContent = `There is already a ${kind} at ${h} h.`; return; }
+  if(other.includes(idx)){ $('tsStatus').textContent = `${h} h is already marked as the opposite type; remove it first.`; return; }
+  state.ts_edits = editAdd(state.ts_edits, ts, kind, idx);
+  $('tsStatus').textContent = `Added ${kind} at ${h} h.`;
+  changed();
+}
+$('tsHost').addEventListener('pointerup', tsEndDrag);
+$('tsHost').addEventListener('pointercancel', () => { if(tsDrag && tsDrag.rect) tsDrag.rect.remove(); tsDrag = null; });
+
 /* ---------------- refresh ---------------- */
 let pending = false;
 function changed(full){ save(); if(full) syncControls(); if(!pending){ pending = true; requestAnimationFrame(() => { pending = false; refresh(); }); } }
 function syncControls(){                       // state -> every control (after loading settings etc.)
-  syncTZ();
+  syncTZ(); tsSyncControls();
   for(const k of ['peaks','troughs']) if($(k).value !== state[k]) $(k).value = state[k];
   $('showLD').checked = state.show_ld; $('extendBefore').checked = state.extend_before;
   cycleRows.forEach((row, i) => { const c = state.cycles[i];
@@ -1851,16 +2613,28 @@ function syncControls(){                       // state -> every control (after 
   syncSwatches();
   for(const nm of ['drag_mode','sel_target']) document.querySelectorAll(`input[name=${nm}]`).forEach(r => r.checked = r.value === state[nm]);
   $('phaseRef').value = state.phase_ref; $('draw_fit').checked = !!state.draw_fit;
-  for(const id of ['show_values','link_peak','link_trough','label_onsets','label_row_starts','mark_times','mark_changes','rows_auto']) $(id).checked = !!state[id];
+  for(const id of ['show_values','link_peak','link_trough','label_onsets','label_row_starts','mark_times','mark_changes','rows_auto','show_points']) $(id).checked = !!state[id];
+  $('ts_draw').value = state.ts_draw; $('ts_draw_scale').value = state.ts_draw_scale;
+  document.querySelectorAll('input[name=ts_draw_data]').forEach(r => r.checked = r.value === state.ts_draw_data);
   $('row_min').value = state.row_min; $('row_max').value = state.row_max;
 }
 function updateCount(k){
   const p = parseList(state[k]), el = $(k + 'Count');
+  if(state.input_mode === 'series'){
+    const ts = tsLast, ok = ts && ts.ok, arr = ok ? ts[k] : [], auto = ok ? (k === 'peaks' ? ts.autoP : ts.autoT) : [];
+    const hand = arr.filter(i => !auto.includes(i)).length;
+    el.className = 'count' + (arr.length ? ' ok' : ''); $(k).setAttribute('aria-invalid','false');
+    el.textContent = ok ? `${arr.length} detected${hand ? ` (${hand} added by hand)` : ''}` : 'None detected';
+    return;
+  }
   if(p.bad.length){ el.className = 'count bad'; el.textContent = `Not a number: ${p.bad.slice(0,3).map(b => '“' + b + '”').join(', ')}${p.bad.length > 3 ? ' …' : ''}`; $(k).setAttribute('aria-invalid','true'); }
   else{ el.className = 'count' + (p.vals.length ? ' ok' : ''); el.textContent = p.vals.length ? `${p.vals.length} value${p.vals.length === 1 ? '' : 's'}` : 'No values yet'; $(k).setAttribute('aria-invalid','false'); }
 }
 function refresh(){
+  const tsRes = state.input_mode === 'series' ? analyzeSeries(state) : null;
+  if(tsRes) tsWriteDetected(tsRes);
   const res = last = compute(state);
+  tsRefresh(tsRes || {}, res);
   $('clockErr').textContent = res.clockErr;
   updateCount('peaks'); updateCount('troughs');
   $('ldBody').hidden = !state.show_ld;
@@ -1964,13 +2738,30 @@ $('savePng').addEventListener('click', () => {
   img.onerror = () => { statusEl.textContent = 'Couldn’t render the PNG. Try SVG instead.'; };
   img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
 });
+function savePngOf(svg, filename){
+  statusEl.textContent = 'Rendering image…'; $('tsStatus').textContent = '';
+  const m = svg.match(/viewBox="0 0 (\d+(?:\.\d+)?) (\d+(?:\.\d+)?)"/), w = +m[1], h = +m[2], sc = 3;
+  const img = new Image();
+  img.onload = () => {
+    const cv = document.createElement('canvas'); cv.width = w*sc; cv.height = h*sc;
+    const ctx = cv.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height); ctx.drawImage(img, 0, 0, cv.width, cv.height);
+    cv.toBlob(b => { if(!b){ statusEl.textContent = 'Couldn’t render the PNG. Try SVG instead.'; return; }
+      statusEl.textContent = ''; reportSave(downloads.save({filename, data:b})); }, 'image/png');
+  };
+  img.onerror = () => { statusEl.textContent = 'Couldn’t render the PNG. Try SVG instead.'; };
+  img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+}
+const tsSvgNow = () => (tsLast && tsLast.ok) ? buildSeriesSVG(tsLast, state, compute(state), tsView).svg : null;
+$('tsSavePng').addEventListener('click', () => { const svg = tsSvgNow(); if(downloads && svg) savePngOf(svg, fileBase() + '_time_series.png'); });
+$('tsSaveSvg').addEventListener('click', () => { const svg = tsSvgNow(); if(downloads && svg){ statusEl.textContent = '';
+  reportSave(downloads.save({filename:fileBase() + '_time_series.svg', data:'<?xml version="1.0" encoding="UTF-8"?>\n' + svg})); } });
 $('saveSettings').addEventListener('click', () => { if(!downloads) return; statusEl.textContent = '';
   reportSave(downloads.save({filename:'actogram_settings.json', data:JSON.stringify(state, null, 2)})); });
 $('loadSettings').addEventListener('click', () => $('settingsFile').click());
 $('settingsFile').addEventListener('change', () => {
   const f = $('settingsFile').files[0]; if(!f) return;
   const rd = new FileReader();
-  rd.onload = () => { try{ state = normalise(JSON.parse(rd.result)); loadAll(); statusEl.textContent = `Loaded ${f.name}`; }
+  rd.onload = () => { try{ tsBackup = null; tsDesel.clear(); state = normalise(JSON.parse(rd.result)); loadAll(); statusEl.textContent = `Loaded ${f.name}`; }
                       catch(e){ statusEl.textContent = 'That file is not a settings file (JSON).'; }
                       $('settingsFile').value = ''; };
   rd.readAsText(f);
@@ -1993,7 +2784,7 @@ $('dlCsv').addEventListener('click', () => {
   downloads.save({filename:fileBase() + '_phase.csv', data:'\ufeff' + csvText()}).then(() => { $('anaStatus').textContent = 'Saved'; })
     .catch(e => { $('anaStatus').textContent = e && e.code === 'declined' ? 'Save cancelled' : 'Saving isn’t available in this view.'; });
 });
-getCap('downloads').then(d => { downloads = d || browserDownloads; $('saveFig').hidden = false; $('saveSettings').hidden = false; $('dlCsv').hidden = false; });
+getCap('downloads').then(d => { downloads = d || browserDownloads; $('saveFig').hidden = false; $('tsSaveBtns').hidden = false; $('saveSettings').hidden = false; $('dlCsv').hidden = false; });
 
 loadAll();
 })();
