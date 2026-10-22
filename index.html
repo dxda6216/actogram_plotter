@@ -278,6 +278,10 @@ textarea[readonly]{background:var(--bg)}
             <input type="file" id="seriesFile" accept=".txt,.csv,.tsv,.dat,.tab,text/plain,text/csv" hidden>
             <button type="button" id="seriesExample">Load example series</button>
           </div>
+          <div class="row" style="margin-top:6px">
+            <button type="button" id="seriesClearData">Clear data</button>
+            <button type="button" id="seriesClearAll">Clear all</button>
+          </div>
           <p class="info" id="tsInfo"></p>
           <p class="errs" id="tsErr"></p>
         </div>
@@ -1202,7 +1206,8 @@ try{
   const raw = localStorage.getItem(KEY);
   // every session starts with the example data (title 'Example Data'), T = 24:00 and US Central Time;
   // only the display options of the last session are kept
-  state = normalise(Object.assign(raw ? JSON.parse(raw) : {}, exampleSettings()));
+  state = normalise(Object.assign(raw ? JSON.parse(raw) : {}, exampleSettings(),
+                                  {input_mode:'series', series:exampleSeriesText(), ts_edits:emptyEdits()}));   // time series: the default input
 }catch(e){ state = normalise({}); }
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
 
@@ -1476,7 +1481,7 @@ const C = {ink:'#222', axis:'#444', grid:'#C9C9C9', frame:'#555'};
 const FONT = '"Helvetica Neue",Helvetica,Arial,sans-serif';
 
 /* ---------------- the time series drawn in the actogram (activity bars or heat map) ---------------- */
-const HEAT_HEIGHT = 0.62, ACTIVITY_COLOR = '#2b2b2b';
+const HEAT_HEIGHT = 0.62, ACTIVITY_COLOR = '#90ee90';     // activity bars: light green, 50 % transparent
 function seriesForActogram(S){
   if(S.input_mode !== 'series' || !['activity','heatmap'].includes(S.ts_draw)) return null;
   const ts = analyzeSeries(S);
@@ -1524,7 +1529,7 @@ function seriesRowsSVG(S, data, firstRow, lastRow, o, T, dbl, X, Y, rh){
           const x0 = X(edges[i]), x1 = X(edges[i+1]), yb = Y(r + 0.4), yt = Y(r + 0.4 - hh);
           d += `M${x0.toFixed(2)} ${yb.toFixed(2)}V${yt.toFixed(2)}H${x1.toFixed(2)}V${yb.toFixed(2)}Z`;
         }
-        if(d) out.push(`<path d="${d}" fill="${ACTIVITY_COLOR}" fill-opacity="0.85"/>`);
+        if(d) out.push(`<path d="${d}" fill="${ACTIVITY_COLOR}" fill-opacity="0.5"/>`);
       }else{
         const y0 = Y(r + 0.4 - 0.8*HEAT_HEIGHT), hgt = 0.8*HEAT_HEIGHT*rh;
         for(let i = 0; i < xs.length; i++){
@@ -1733,7 +1738,7 @@ function buildSVG(S, res){
   // legend
   const lx = ml + plotW + 18; let ly = plotTop + 6;
   const items = S.show_points ? [['dot', PEAK, 'Peaks'], ['dot', TROUGH, 'Troughs']] : [];
-  if(srows && srows.whole && S.ts_draw === 'activity') items.push(['box', ACTIVITY_COLOR, `${srows.name} (activity)`, 0.85]);
+  if(srows && srows.whole && S.ts_draw === 'activity') items.push(['box', ACTIVITY_COLOR, `${srows.name} (activity)`, 0.5]);
   if(ld){ const f = ld.segs[0];
     items.push(['box', LIGHT, multi ? 'Light (L)' : `Light (L ${fmtDur(f.L)})`, 1]);
     items.push(['box', DARK, multi ? 'Dark (D)' : `Dark (D ${fmtDur(f.D)})`, 1]); }
@@ -2453,6 +2458,8 @@ $('seriesExample').addEventListener('click', async () => {     // example series
   loadAll();
 });
 $('seriesOpen').addEventListener('click', () => $('seriesFile').click());
+$('seriesClearData').addEventListener('click', () => $('clearData').click());
+$('seriesClearAll').addEventListener('click', () => $('clearAll').click());
 $('seriesFile').addEventListener('change', () => {
   const f = $('seriesFile').files[0]; if(!f) return;
   const rd = new FileReader();
@@ -2786,6 +2793,8 @@ $('dlCsv').addEventListener('click', () => {
 });
 getCap('downloads').then(d => { downloads = d || browserDownloads; $('saveFig').hidden = false; $('tsSaveBtns').hidden = false; $('saveSettings').hidden = false; $('dlCsv').hidden = false; });
 
+{ const ex = exampleSettings();        // 'Enter the times' then shows the example's typed lists
+  tsBackup = {peaks:ex.peaks, troughs:ex.troughs, sel_peaks:[...ex.sel_peaks], sel_troughs:[...ex.sel_troughs]}; }
 loadAll();
 })();
 </script>
