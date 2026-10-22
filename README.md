@@ -27,3 +27,4 @@ The page is delivered by GitHub Pages, but everything you enter stays in your br
 
 ## License
 This web application is released under the [MIT License](https://github.com/dxda6216/actogram_plotter/blob/main/LICENSE).
+You may download the source code and freely modify and use it. If your programming skills are limited, you can submit the source code to an AI like ChatGPT, Gemini, or Claude, tell it how you want to change it, and the AI will likely make some modifications and adjustments for you.
