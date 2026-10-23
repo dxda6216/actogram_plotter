@@ -17,7 +17,7 @@ To use the app without an internet connection, download `index.html` from this r
 
 ## User manual
 
-:open_book: **https://github.com/dxda6216/actogram_plotter/blob/main/actogram_plotter_web_app_manual.pdf**
+**▶ https://github.com/dxda6216/actogram_plotter/blob/main/actogram_plotter_web_app_manual.pdf**
 
 ## Privacy and data confidentiality
 
